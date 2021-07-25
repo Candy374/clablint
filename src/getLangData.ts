@@ -6,7 +6,7 @@ import * as fs from 'fs';
 import * as globby from 'globby';
 import * as vscode from 'vscode';
 import { I18N_GLOB } from './const';
-import { flatten, getLangJson } from './utils';
+import { flatten, getCurrentProjectLangPath, getLangJson } from './utils';
 
 /**
  * 获取对应文件的语言
@@ -19,7 +19,7 @@ export function getLangData(fileName: string) {
   }
 }
 export function getI18N() {
-  const _I18N_GLOB =  I18N_GLOB;
+  const _I18N_GLOB =  getCurrentProjectLangPath() || I18N_GLOB;
   const paths = globby.sync(_I18N_GLOB);
   const langObj = paths.reduce((prev, curr) => {
     const filename = curr

@@ -192,25 +192,9 @@ export function translateText(text: any) {
  * 获取多项目配置
  */
 export function getTargetLangPath(currentFilePath: string | string[]) {
-  const configFile = `${vscode.workspace.workspaceFolders?.[0].uri.fsPath}/.kiwi`;
-  let targetLangPath = '';
+  const configFile = `${vscode.workspace.workspaceFolders?.[0].uri.fsPath}/src/i18n/langs`;
 
-  try {
-    if (fs.existsSync(configFile)) {
-      const { projects = [] } = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-      console.log(projects);
-      for (const config of projects) {
-        if (currentFilePath.indexOf(`/${config.target}/`) > -1) {
-          targetLangPath = `${vscode.workspace.workspaceFolders?.[0].uri.fsPath}/${config.kiwiDir}/zh_CN/`;
-          return targetLangPath;
-        }
-      }
-    }
-  } catch (error) {
-    console.log(error);
-  }
-
-  return targetLangPath;
+  return configFile;
 }
 
 /**

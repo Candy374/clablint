@@ -21,6 +21,59 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(disposable);
+
+
+	// 识别到出错时点击小灯泡弹出的操作
+	// const hasLightBulb = getConfiguration('enableReplaceSuggestion');
+	// if (hasLightBulb) {
+	//   context.subscriptions.push(
+	// 	vscode.languages.registerCodeActionsProvider(
+	// 	  [
+	// 		{ scheme: 'file', language: 'typescriptreact' },
+	// 		{ scheme: 'file', language: 'html' },
+	// 		{ scheme: 'file', language: 'typescript' },
+	// 		{ scheme: 'file', language: 'javascriptreact' },
+	// 		{ scheme: 'file', language: 'javascript' },
+	// 		{ scheme: '*', language: 'vue' }
+	// 	  ],
+	// 	  {
+	// 		provideCodeActions: function(document, range, context, token) {
+	// 		  const targetStr = targetStrs.find(t => range.intersection(t.range) !== undefined);
+	// 		  if (targetStr) {
+	// 			const sameTextStrs = targetStrs.filter(t => t.text === targetStr.text);
+	// 			const text = targetStr.text;
+	// 			const actions = [];
+	// 			finalLangObj = getSuggestLangObj();
+	// 			for (const key in finalLangObj) {
+	// 			  if (finalLangObj[key] === text) {
+	// 				actions.push({
+	// 				  title: `抽取为 \`I18N.${key}\``,
+	// 				  command: 'vscode-i18n-linter.extractI18N',
+	// 				  arguments: [
+	// 					{
+	// 					  targets: sameTextStrs,
+	// 					  varName: `I18N.${key}`
+	// 					}
+	// 				  ]
+	// 				});
+	// 			  }
+	// 			}
+  
+	// 			return actions.concat({
+	// 			  title: `抽取为自定义 I18N 变量（共${sameTextStrs.length}处）`,
+	// 			  command: 'vscode-i18n-linter.extractI18N',
+	// 			  arguments: [
+	// 				{
+	// 				  targets: sameTextStrs
+	// 				}
+	// 			  ]
+	// 			});
+	// 		  }
+	// 		}
+	// 	  }
+	// 	)
+	//   );
+	// }
 }
 
 // this method is called when your extension is deactivated
