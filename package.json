@@ -11,6 +11,10 @@
 		"Other"
 	],
 	"activationEvents": [
+		"onLanguage:typescript",
+		"onLanguage:typescriptreact",
+		"onLanguage:javascriptreact",
+		"onLanguage:javascript",
 		"onCommand:clab-lint.helloWorld",
 		"onCommand:clab-lint.findAllI18N"
 	],
@@ -25,7 +29,18 @@
 				"command": "clab-lint.findAllI18N",
 				"title": "Hello findAllI18N"
 			}
-		]
+		],
+		"configuration": {
+			"type": "object",
+			"title": "Convertlab I18N Lint",
+			"properties": {
+				"clab-lint.enableReplaceSuggestion": {
+					"type": "boolean",
+					"default": true,
+					"description": "Add a light blob beside string literal and provide I18N variable replacement suggestions"
+				}
+			}
+		}
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -41,6 +56,7 @@
 		"@types/lodash": "^4.14.171",
 		"@types/mocha": "^8.2.2",
 		"@types/node": "14.x",
+		"@types/prettier": "^2.3.2",
 		"@types/vscode": "^1.57.0",
 		"@typescript-eslint/eslint-plugin": "^4.26.0",
 		"@typescript-eslint/parser": "^4.26.0",
@@ -52,6 +68,7 @@
 	},
 	"dependencies": {
 		"fs-extra": "^10.0.0",
-		"lodash": "^4.17.21"
+		"lodash": "^4.17.21",
+		"prettier": "^2.3.2"
 	}
 }

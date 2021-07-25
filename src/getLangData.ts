@@ -49,6 +49,6 @@ export function getI18N() {
  */
 export function getSuggestLangObj() {
   const langObj = getI18N();
-  const finalLangObj = flatten(langObj) as any;
+  const finalLangObj = flatten(langObj);
   return finalLangObj;
 }

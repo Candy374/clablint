@@ -12,9 +12,9 @@ import * as path from 'path';
  * @param obj    原始对象
  * @param prefix
  */
-export function flatten(obj: Record<any, any>, prefix?: string) {
+export function flatten(obj: {[key:string]: any}, prefix?: string) {
   var propName = prefix ? prefix + '.' : '',
-    ret = {} as Record<any, any> ;
+    ret = {} as {[key:string]: any} ;
 
   for (var attr in obj) {
     if (_.isArray(obj[attr])) {
@@ -97,9 +97,10 @@ export function getLangJson(fileName: string) : {[key: string]: any} {
 /**
  * 获取配置，支持从vscode和配置文件(优先)中取到配置项
  */
-export const getConfiguration = (text: string) => {
-  let value = vscode.workspace.getConfiguration('convertlab-i18n-linter').get(text);
+export function getConfiguration (text: string): any {
+  const configs = vscode.workspace.getConfiguration('clab-linter');
 
+  const value = configs.get(text)
   return value;
 };
 
