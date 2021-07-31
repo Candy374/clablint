@@ -5,7 +5,7 @@ import { triggerUpdateDecorations } from "./chineseCharDecorations";
 import { TargetStr } from "./define";
 
 import { getI18N } from "./getLangData";
-import { replaceAndUpdate } from "./replaceAndUpdate";
+import { addImportString, replaceAndUpdate } from "./replaceAndUpdate";
 import { findMatchKey, getConfiguration } from "./utils";
 import * as randomstring from "randomstring";
 import _ = require("lodash");
@@ -189,93 +189,90 @@ export function activate(context: vscode.ExtensionContext) {
   const virtualMemory: { [key: string]: any } = {};
   // 一键替换所有中文
   context.subscriptions.push(
-    vscode.commands.registerCommand("clab-lint.start", () => {
+    vscode.commands.registerCommand("clab-lint.start", async () => {
       if (targetStringList.length === 0) {
         vscode.window.showInformationMessage("没有找到可替换的文案");
         return;
       }
 
-      vscode.window
-        .showInformationMessage(
-          `共找到 ${targetStringList.length} 处可自动替换的文案，是否替换？`,
-          { modal: true },
-          "Yes"
-        )
-        .then((action) => {
-          if (action === "Yes") {
-            // // 翻译中文文案
-            // const translatePromises = targetStringList.reduce((prev, curr) => {
-            //   // 避免翻译的字符里包含数字或者特殊字符等情况
-            //   const reg = DOUBLE_BYTE_REGEX;
-            //   const findText = curr.text.match(reg);
-            //   const transText = findText?.join("").slice(0, 4);
-            //   return prev.concat(translateText(transText));
-            // }, [] as any[]);
+      const action = await vscode.window.showInformationMessage(
+        `共找到 ${targetStringList.length} 处可自动替换的文案，是否替换？`,
+        { modal: true },
+        "Yes"
+      );
 
-            const translateTexts: string[] = [];
-            // Promise.all(translatePromises).then(([...translateTexts]) => {
-            const replaceableStrs = targetStringList.reduce((prev, curr, i) => {
-              const key = findMatchKey(finalLangObj, curr.text);
-              if (!virtualMemory[curr.text]) {
-                if (key) {
-                  virtualMemory[curr.text] = key;
-                  return prev.concat({
-                    target: curr,
-                    key,
-                  });
-                }
-                const uuidKey = `${randomstring.generate({
-                  length: 8,
-                  charset:
-                    "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
-                })}`;
-                const transText = translateTexts[i]
-                  ? _.camelCase(translateTexts[i])
-                  : uuidKey;
-                let transKey = `${suggestionPath}${transText}`;
-                let occurTime = 1;
-                // 防止出现前四位相同但是整体文案不同的情况
-                while (
-                  finalLangObj[transKey] !== curr.text &&
-                  _.keys(finalLangObj).includes(
-                    `${transKey}${occurTime >= 2 ? occurTime : ""}`
-                  )
-                ) {
-                  occurTime++;
-                }
-                if (occurTime >= 2) {
-                  transKey = `${transKey}${occurTime}`;
-                }
-                virtualMemory[curr.text] = transKey;
-                finalLangObj[transKey] = curr.text;
-                return prev.concat({
-                  target: curr,
-                  key: transKey,
-                });
-              } else {
-                return prev.concat({
-                  target: curr,
-                  key: virtualMemory[curr.text],
-                });
-              }
-            }, [] as any[]);
+      if (action !== "Yes") {
+        return;
+      }
 
-            replaceableStrs
-              .reverse()
-              .reduce((prev: Promise<any>, obj) => {
-                return prev.then(() => {
-                  return replaceAndUpdate(obj.target, `I18n.${obj.key}`, false);
-                });
-              }, Promise.resolve())
-              .then(() => {
-                vscode.window.showInformationMessage("替换完成");
-              })
-              .catch((e) => {
-                vscode.window.showErrorMessage(e.message);
-              });
-            // });
+      // // 翻译中文文案
+      // const translatePromises = targetStringList.reduce((prev, curr) => {
+      //   // 避免翻译的字符里包含数字或者特殊字符等情况
+      //   const reg = DOUBLE_BYTE_REGEX;
+      //   const findText = curr.text.match(reg);
+      //   const transText = findText?.join("").slice(0, 4);
+      //   return prev.concat(translateText(transText));
+      // }, [] as any[]);
+
+      const translateTexts: string[] = [];
+      // Promise.all(translatePromises).then(([...translateTexts]) => {
+      const replaceableList = targetStringList.reduce((prev, curr, i) => {
+        const key = findMatchKey(finalLangObj, curr.text);
+        if (!virtualMemory[curr.text]) {
+          if (key) {
+            virtualMemory[curr.text] = key;
+            return prev.concat({
+              target: curr,
+              key,
+            });
           }
-        });
+          const uuidKey = `${randomstring.generate({
+            length: 8,
+            charset: "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
+          })}`;
+          const transText = translateTexts[i]
+            ? _.camelCase(translateTexts[i])
+            : uuidKey;
+          let transKey = `${suggestionPath}${transText}`;
+          let occurTime = 1;
+          // 防止出现前四位相同但是整体文案不同的情况
+          while (
+            finalLangObj[transKey] !== curr.text &&
+            _.keys(finalLangObj).includes(
+              `${transKey}${occurTime >= 2 ? occurTime : ""}`
+            )
+          ) {
+            occurTime++;
+          }
+          if (occurTime >= 2) {
+            transKey = `${transKey}${occurTime}`;
+          }
+          virtualMemory[curr.text] = transKey;
+          finalLangObj[transKey] = curr.text;
+          return prev.concat({
+            target: curr,
+            key: transKey,
+          });
+        } else {
+          return prev.concat({
+            target: curr,
+            key: virtualMemory[curr.text],
+          });
+        }
+      }, [] as { key: string; target: TargetStr }[]);
+
+      try {
+        for (const { key, target } of replaceableList.reverse()) {
+          await replaceAndUpdate(target, `I18n.${key}`, false);
+        }
+
+        addImportString();
+        vscode.window.showInformationMessage(
+          "替换完成, 修改了${replaceableList.length}个字符串"
+        );
+      } catch (e) {
+        vscode.window.showErrorMessage(e.message);
+      }
     })
   );
 }

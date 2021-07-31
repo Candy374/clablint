@@ -65,22 +65,20 @@ export function replaceAndUpdate(
     // edit.replace(document.uri, arg.range, "{" + val + "}");
   }
 
-  addImportString(document, edit);
-
   try {
     // 更新语言文件
     updateLangFiles(val, finalReplaceText, validateDuplicate);
+
     // 若更新成功再替换代码
     return vscode.workspace.applyEdit(edit);
   } catch (e) {
-    return Promise.reject(e.message);
+    throw new Error(e);
   }
 }
 
-function addImportString(
-  document: vscode.TextDocument,
-  edit: vscode.WorkspaceEdit
-) {
+export function addImportString() {
+  const edit = new vscode.WorkspaceEdit();
+  const { document } = vscode.window.activeTextEditor!;
   const importI18nStr = `import { I18n } from 'i18n/dev';\n`;
   const importTranslateStr = `import { translate } from 'i18n/translate';\n`;
 
@@ -93,4 +91,5 @@ function addImportString(
   if (!content.includes(importTranslateStr)) {
     edit.insert(document.uri, new vscode.Position(0, 0), importTranslateStr);
   }
+  vscode.workspace.applyEdit(edit);
 }
