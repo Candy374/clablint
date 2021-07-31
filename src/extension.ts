@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 import { triggerUpdateDecorations } from "./chineseCharDecorations";
 import { TargetStr } from "./define";
 import { findAllI18N } from "./findAllI18N";
-import { getSuggestLangObj } from "./getLangData";
+import { getI18N, getKeyByValueMap, getSuggestLangObj } from "./getLangData";
 import { replaceAndUpdate } from "./replaceAndUpdate";
 import { findMatchKey, getConfiguration, translateText } from "./utils";
 import * as randomstring from "randomstring";
@@ -74,21 +74,21 @@ export function activate(context: vscode.ExtensionContext) {
                 command: string;
                 arguments: any[];
               }[] = [];
-              // finalLangObj = getSuggestLangObj();
-              // for (const key in finalLangObj) {
-              //   if (finalLangObj[key] === text) {
-              //     actions.push({
-              //       title: `抽取为 \`I18n.${key}\``,
-              //       command: "clab-lint.extractI18N",
-              //       arguments: [
-              //         {
-              //           targets: sameTextStringList,
-              //           varName: `I18n.${key}`,
-              //         },
-              //       ],
-              //     });
-              //   }
-              // }
+              finalLangObj = getI18N();
+
+              const key = getKeyByValueMap(finalLangObj, text);
+              if (key) {
+                actions.push({
+                  title: `抽取为 \`I18n.${key}\``,
+                  command: "clab-lint.extractI18N",
+                  arguments: [
+                    {
+                      targets: sameTextStringList,
+                      varName: `I18n.${key}`,
+                    },
+                  ],
+                });
+              }
 
               return actions.concat({
                 title: `抽取为自定义 I18n 变量（共${sameTextStringList.length}处）`,

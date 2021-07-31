@@ -18,6 +18,11 @@ function getWorkspacePath() {
     }
   }
 }
+
+export function getMainTranslateFile() {
+  return `${getWorkspacePath()}/src/i18n/translationMeta.ts`;
+}
+
 export function updateLangFiles(
   keyValue: string,
   text: string,
@@ -136,7 +141,7 @@ export function addImportToMainLangFile(newFilename: string) {
 function addImportToMetaFile(relativeFilename: string, entity: string) {
   let mainContent = "";
 
-  let mainFile = `${getWorkspacePath()}/src/i18n/translationMeta.ts`;
+  let mainFile = getMainTranslateFile();
   if (fs.existsSync(mainFile)) {
     mainContent = fs.readFileSync(mainFile, "utf8");
     if (mainContent.includes(`${entity},`)) {

@@ -22,16 +22,12 @@
   "contributes": {
     "commands": [
       {
-        "command": "clab-lint.helloWorld",
-        "title": "Hello Convertlab"
-      },
-      {
         "command": "clab-lint.findAllI18N",
         "title": "Hello findAllI18N"
       },
       {
         "command": "clab-lint.start",
-        "title": "translate all"
+        "title": "clab-lint translate current file"
       }
     ],
     "configuration": {

@@ -2,31 +2,31 @@
  * @author linhuiw
  * @desc 查找所有 I18N 值
  */
-import * as fs from 'fs-extra';
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { LANG_PREFIX } from './const';
-import { Item } from './define';
-import { findI18NPositions } from './findI18NPositions';
+import * as fs from "fs-extra";
+import * as path from "path";
+import * as vscode from "vscode";
+import { LANG_PREFIX } from "./const";
+import { Item } from "./define";
+import { findI18NPositions } from "./findI18NPositions";
 
-import { findInHtmls } from './findInHtmls';
-import { getI18N } from './getLangData';
-import { transformPosition } from './lineAnnotation';
-import { findPositionInCode } from './utils';
+import { findInHtmls } from "./findInHtmls";
+import { getI18N } from "./getLangData";
+import { transformPosition } from "./lineAnnotation";
+import { findPositionInCode } from "./utils";
 
 function extractObject(obj: any, keys = [] as string[]): Array<Item> {
-  if (typeof obj === 'string') {
+  if (typeof obj === "string") {
     return [
       {
         keys,
-        value: obj
-      }
+        value: obj,
+      },
     ];
   }
   const objKeys = Object.keys(obj);
 
   return objKeys
-    .map(key => {
+    .map((key) => {
       const value = obj[key];
       const currKeys = [...keys, key];
 
@@ -41,23 +41,25 @@ function extractObject(obj: any, keys = [] as string[]): Array<Item> {
 export function findAllI18N() {
   const I18NText = getI18N();
   const allItems = extractObject(I18NText);
-  const langPrefix =  LANG_PREFIX;
+  const langPrefix = LANG_PREFIX;
 
-  const getDesc = (item: Item) => item.value + ' I18N.' + item.keys.join('.');
+  const getDesc = (item: Item) => item.value + " I18n." + item.keys.join(".");
 
-  vscode.window.showQuickPick(allItems.map(getDesc)).then(async selected => {
-    const foundItem = allItems.find(item => getDesc(item) === selected);
+  vscode.window.showQuickPick(allItems.map(getDesc)).then(async (selected) => {
+    const foundItem = allItems.find((item) => getDesc(item) === selected);
 
     if (!foundItem) {
       return;
     }
 
     const [target, ...restKeys] = foundItem.keys;
-    const uri = vscode.Uri.file(path.join(langPrefix, target + '.ts'));
-    const content = (await fs.readFile(path.join(langPrefix, target + '.ts'))).toString('utf8');
+    const uri = vscode.Uri.file(path.join(langPrefix, target + ".ts"));
+    const content = (
+      await fs.readFile(path.join(langPrefix, target + ".ts"))
+    ).toString("utf8");
 
     const preCodeContent = '"' + restKeys[restKeys.length - 1] + '"';
-    const newCodeContent = ' ' + restKeys[restKeys.length - 1] + ':';
+    const newCodeContent = " " + restKeys[restKeys.length - 1] + ":";
     let pos = findPositionInCode(preCodeContent, content);
 
     if (!pos) {
@@ -67,13 +69,13 @@ export function findAllI18N() {
     await vscode.workspace.openTextDocument(uri);
 
     try {
-      const tsLocations = await vscode.commands.executeCommand<vscode.Location[]>(
-        'vscode.executeReferenceProvider',
-        uri,
-        pos
-      ) as any;
+      const tsLocations = (await vscode.commands.executeCommand<
+        vscode.Location[]
+      >("vscode.executeReferenceProvider", uri, pos)) as any;
 
-      const templateLocations = await findInHtmls('I18N.' + foundItem.keys.join('.'));
+      const templateLocations = await findInHtmls(
+        "I18n." + foundItem.keys.join(".")
+      );
       const locations = [...tsLocations.slice(1), ...templateLocations];
 
       if (locations.length === 1) {
@@ -83,27 +85,46 @@ export function findAllI18N() {
         const doc = await vscode.workspace.openTextDocument(uri);
         await vscode.window.showTextDocument(doc);
 
-        vscode.window.activeTextEditor!.selection = new vscode.Selection(range.start, range.end);
-        vscode.window.activeTextEditor!.revealRange(range, vscode.TextEditorRevealType.InCenter);
+        vscode.window.activeTextEditor!.selection = new vscode.Selection(
+          range.start,
+          range.end
+        );
+        vscode.window.activeTextEditor!.revealRange(
+          range,
+          vscode.TextEditorRevealType.InCenter
+        );
       } else if (locations.length > 1) {
         vscode.window
           .showQuickPick(
             //@ts-ignore
-            locations.map(real => path.relative(vscode.workspace.workspaceFolders[0].uri.fsPath, real.uri.fsPath))
+            locations.map((real) =>
+              path.relative(
+                vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || "",
+                real.uri.fsPath
+              )
+            )
           )
-          .then(async item => {
-            const index = locations.findIndex(real => real.uri.fsPath.includes(item));
+          .then(async (item) => {
+            const index = locations.findIndex((real) =>
+              real.uri.fsPath.includes(item)
+            );
 
             const uri = locations[index].uri;
             const range = locations[index].range;
             const doc = await vscode.workspace.openTextDocument(uri);
             await vscode.window.showTextDocument(doc);
 
-            vscode.window.activeTextEditor!.selection = new vscode.Selection(range.start, range.end);
-            vscode.window.activeTextEditor!.revealRange(range, vscode.TextEditorRevealType.InCenter);
+            vscode.window.activeTextEditor!.selection = new vscode.Selection(
+              range.start,
+              range.end
+            );
+            vscode.window.activeTextEditor!.revealRange(
+              range,
+              vscode.TextEditorRevealType.InCenter
+            );
           });
       } else {
-        vscode.window.showInformationMessage('未被使用！');
+        vscode.window.showInformationMessage("未被使用！");
       }
     } catch (e) {
       debugger;
@@ -119,11 +140,23 @@ export function findI18N() {
   const code = document.getText();
   const positions = findI18NPositions(code) as any;
 
-  vscode.window.showQuickPick(positions.map((pos: { cn: any; code: any; }) => `${pos.cn}  ${pos.code}`)).then(item => {
-    const foundPos = positions.find((pos: { cn: any; code: any; }) => `${pos.cn}  ${pos.code}` === item) as any;
+  vscode.window
+    .showQuickPick(
+      positions.map((pos: { cn: any; code: any }) => `${pos.cn}  ${pos.code}`)
+    )
+    .then((item) => {
+      const foundPos = positions.find(
+        (pos: { cn: any; code: any }) => `${pos.cn}  ${pos.code}` === item
+      ) as any;
 
-    const range = transformPosition(foundPos, code);
-    vscode.window.activeTextEditor!.selection = new vscode.Selection(range.start, range.end);
-    vscode.window.activeTextEditor!.revealRange(range, vscode.TextEditorRevealType.InCenter);
-  });
+      const range = transformPosition(foundPos, code);
+      vscode.window.activeTextEditor!.selection = new vscode.Selection(
+        range.start,
+        range.end
+      );
+      vscode.window.activeTextEditor!.revealRange(
+        range,
+        vscode.TextEditorRevealType.InCenter
+      );
+    });
 }
