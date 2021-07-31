@@ -5,7 +5,7 @@
 import * as ts from "typescript";
 import * as vscode from "vscode";
 import * as _ from "lodash";
-import { getI18N } from "./getLangData";
+import { getFolderArr, getI18N } from "./getLangData";
 
 class Cache {
   memories = [] as Array<{ code: string; positions: Position[] }>;
@@ -59,9 +59,15 @@ function getRegexMatches(I18N: any, code: string) {
       exps = exps.split('"')[0];
       exps = exps.split("'")[0];
       exps = exps.split(" ")[0];
-      const code = `I18N.${exps}`;
+
+      const currentFilename = vscode.window.activeTextEditor!.document.uri.path;
+      const [filePrefix, filePath] = currentFilename.split("/src/");
+
+      const filePathPrefix = getFolderArr(filePath).join(".");
+
+      const code = exps.replace(filePathPrefix, "").replace(/^\./, "");
       const position = new Position();
-      const transformedCn = _.get(I18N, exps.split("."));
+      const transformedCn = _.get(I18N, code.split("."));
       if (typeof transformedCn === "string") {
         position.cn = transformedCn;
         (position as any).line = index;

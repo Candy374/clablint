@@ -36,6 +36,7 @@ export function updateLangFiles(
   if (restPath.length === 1) {
     restPath.unshift(entity);
     folderPath = folder;
+    entity = folder;
   } else {
     folderPath = `${folder}/${entity}`;
   }
@@ -46,8 +47,8 @@ export function updateLangFiles(
 
   if (!fs.existsSync(targetFilename)) {
     fs.outputFileSync(targetFilename, generateNewLangFile(fullKey, text));
-    addImportToMetaFile(`${folderPath}/i18n`, entity);
     vscode.window.showInformationMessage(`成功新建文件 ${targetFilename}`);
+    addImportToMetaFile(`${folderPath}/i18n`, entity);
   } else {
     // 清除 require 缓存，解决手动更新语言文件后再自动抽取，导致之前更新失效的问题
     const mainContent = getLangData(targetFilename);
@@ -148,7 +149,6 @@ function addImportToMetaFile(relativeFilename: string, entity: string) {
       return;
     }
 
-    // TODO: check filename or entity is exists?
     mainContent = mainContent
       .replace(
         /^(\s*import.*?;)$/m,
@@ -157,6 +157,8 @@ function addImportToMetaFile(relativeFilename: string, entity: string) {
       .replace(/\};/, `${entity}, };`);
 
     mainContent = prettierFile(mainContent);
+
+    vscode.window.showInformationMessage(`成功引入新的翻译文件 ${entity}`);
   } else {
     mainContent = `import ${entity} from '${relativeFilename}';
     const translationMap = {

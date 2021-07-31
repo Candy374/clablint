@@ -4,12 +4,11 @@ import * as vscode from "vscode";
 import { triggerUpdateDecorations } from "./chineseCharDecorations";
 import { TargetStr } from "./define";
 import { findAllI18N } from "./findAllI18N";
-import { getI18N, getKeyByValueMap, getSuggestLangObj } from "./getLangData";
+import { getI18N, getKeyByValueMap } from "./getLangData";
 import { replaceAndUpdate } from "./replaceAndUpdate";
-import { findMatchKey, getConfiguration, translateText } from "./utils";
+import { findMatchKey, getConfiguration } from "./utils";
 import * as randomstring from "randomstring";
 import _ = require("lodash");
-import { DOUBLE_BYTE_REGEX } from "./const";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed

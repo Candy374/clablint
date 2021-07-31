@@ -3,10 +3,8 @@
  * @desc 获取语言文件
  */
 import * as fs from "fs";
-import * as globby from "globby";
 import * as vscode from "vscode";
-import { I18N_GLOB } from "./const";
-import { flatten, getCurrentProjectLangPath, getLangJson } from "./utils";
+import { getLangJson } from "./utils";
 
 /**
  * 获取对应文件的语言
@@ -19,12 +17,13 @@ export function getLangData(fileName: string) {
   }
 }
 
-function getFolderArr(filePath: string) {
+export function getFolderArr(filePath: string) {
   const pathPart = filePath.split("/");
   pathPart.pop();
-  pathPart.pop();
+
   return pathPart.slice(0, 2);
 }
+
 export function getI18N() {
   const currentFilename = vscode.window.activeTextEditor!.document.uri.path;
   const [filePrefix, filePath] = currentFilename.split("/src/");
@@ -40,11 +39,6 @@ export function getI18N() {
 /**
  * 获取全部语言, 展平
  */
-export function getSuggestLangObj() {
-  const langObj = getI18N();
-  const finalLangObj = flatten(langObj);
-  return finalLangObj;
-}
 
 type TranslateMap = { [key: string]: TranslateMap | string };
 export function getKeyByValueMap(meta: TranslateMap, value: string) {
