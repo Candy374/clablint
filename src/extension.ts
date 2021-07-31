@@ -218,83 +218,77 @@ export function activate(context: vscode.ExtensionContext) {
         )
         .then((action) => {
           if (action === "Yes") {
-            // 翻译中文文案
-            const translatePromises = targetStringList.reduce((prev, curr) => {
-              // 避免翻译的字符里包含数字或者特殊字符等情况
-              const reg = DOUBLE_BYTE_REGEX;
-              const findText = curr.text.match(reg);
-              const transText = findText?.join("").slice(0, 4);
-              return prev.concat(translateText(transText));
+            // // 翻译中文文案
+            // const translatePromises = targetStringList.reduce((prev, curr) => {
+            //   // 避免翻译的字符里包含数字或者特殊字符等情况
+            //   const reg = DOUBLE_BYTE_REGEX;
+            //   const findText = curr.text.match(reg);
+            //   const transText = findText?.join("").slice(0, 4);
+            //   return prev.concat(translateText(transText));
+            // }, [] as any[]);
+
+            const translateTexts: string[] = [];
+            // Promise.all(translatePromises).then(([...translateTexts]) => {
+            const replaceableStrs = targetStringList.reduce((prev, curr, i) => {
+              const key = findMatchKey(finalLangObj, curr.text);
+              if (!virtualMemory[curr.text]) {
+                if (key) {
+                  virtualMemory[curr.text] = key;
+                  return prev.concat({
+                    target: curr,
+                    key,
+                  });
+                }
+                const uuidKey = `${randomstring.generate({
+                  length: 8,
+                  charset:
+                    "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
+                })}`;
+                const transText = translateTexts[i]
+                  ? _.camelCase(translateTexts[i])
+                  : uuidKey;
+                let transKey = `${suggestionPath}${transText}`;
+                let occurTime = 1;
+                // 防止出现前四位相同但是整体文案不同的情况
+                while (
+                  finalLangObj[transKey] !== curr.text &&
+                  _.keys(finalLangObj).includes(
+                    `${transKey}${occurTime >= 2 ? occurTime : ""}`
+                  )
+                ) {
+                  occurTime++;
+                }
+                if (occurTime >= 2) {
+                  transKey = `${transKey}${occurTime}`;
+                }
+                virtualMemory[curr.text] = transKey;
+                finalLangObj[transKey] = curr.text;
+                return prev.concat({
+                  target: curr,
+                  key: transKey,
+                });
+              } else {
+                return prev.concat({
+                  target: curr,
+                  key: virtualMemory[curr.text],
+                });
+              }
             }, [] as any[]);
 
-            Promise.all(translatePromises).then(([...translateTexts]) => {
-              const replaceableStrs = targetStringList.reduce(
-                (prev, curr, i) => {
-                  const key = findMatchKey(finalLangObj, curr.text);
-                  if (!virtualMemory[curr.text]) {
-                    if (key) {
-                      virtualMemory[curr.text] = key;
-                      return prev.concat({
-                        target: curr,
-                        key,
-                      });
-                    }
-                    const uuidKey = `${randomstring.generate({
-                      length: 4,
-                      charset:
-                        "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
-                    })}`;
-                    const transText = translateTexts[i]
-                      ? _.camelCase(translateTexts[i])
-                      : uuidKey;
-                    let transKey = `${suggestionPath}${transText}`;
-                    let occurTime = 1;
-                    // 防止出现前四位相同但是整体文案不同的情况
-                    while (
-                      finalLangObj[transKey] !== curr.text &&
-                      _.keys(finalLangObj).includes(
-                        `${transKey}${occurTime >= 2 ? occurTime : ""}`
-                      )
-                    ) {
-                      occurTime++;
-                    }
-                    if (occurTime >= 2) {
-                      transKey = `${transKey}${occurTime}`;
-                    }
-                    virtualMemory[curr.text] = transKey;
-                    finalLangObj[transKey] = curr.text;
-                    return prev.concat({
-                      target: curr,
-                      key: transKey,
-                    });
-                  } else {
-                    return prev.concat({
-                      target: curr,
-                      key: virtualMemory[curr.text],
-                    });
-                  }
-                },
-                [] as any[]
-              );
-
-              replaceableStrs
-                .reverse()
-                .reduce((prev: Promise<any>, obj) => {
-                  return prev.then(() => {
-                    return replaceAndUpdate(
-                      obj.target,
-                      `I18n.${obj.key}`,
-                      false
-                    );
-                  });
-                }, Promise.resolve())
-                .then(() => {
-                  vscode.window.showInformationMessage("替换完成");
-                })
-                .catch((e) => {
-                  vscode.window.showErrorMessage(e.message);
+            replaceableStrs
+              .reverse()
+              .reduce((prev: Promise<any>, obj) => {
+                return prev.then(() => {
+                  return replaceAndUpdate(obj.target, `I18n.${obj.key}`, false);
                 });
-            });
+              }, Promise.resolve())
+              .then(() => {
+                vscode.window.showInformationMessage("替换完成");
+              })
+              .catch((e) => {
+                vscode.window.showErrorMessage(e.message);
+              });
+            // });
           }
         });
     })
