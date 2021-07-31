@@ -9,6 +9,7 @@ import { replaceAndUpdate } from "./replaceAndUpdate";
 import { findMatchKey, getConfiguration, translateText } from "./utils";
 import * as randomstring from "randomstring";
 import _ = require("lodash");
+import { DOUBLE_BYTE_REGEX } from "./const";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -73,24 +74,24 @@ export function activate(context: vscode.ExtensionContext) {
                 command: string;
                 arguments: any[];
               }[] = [];
-              finalLangObj = getSuggestLangObj();
-              for (const key in finalLangObj) {
-                if (finalLangObj[key] === text) {
-                  actions.push({
-                    title: `抽取为 \`I18N.${key}\``,
-                    command: "clab-lint.extractI18N",
-                    arguments: [
-                      {
-                        targets: sameTextStringList,
-                        varName: `I18N.${key}`,
-                      },
-                    ],
-                  });
-                }
-              }
+              // finalLangObj = getSuggestLangObj();
+              // for (const key in finalLangObj) {
+              //   if (finalLangObj[key] === text) {
+              //     actions.push({
+              //       title: `抽取为 \`I18n.${key}\``,
+              //       command: "clab-lint.extractI18N",
+              //       arguments: [
+              //         {
+              //           targets: sameTextStringList,
+              //           varName: `I18n.${key}`,
+              //         },
+              //       ],
+              //     });
+              //   }
+              // }
 
               return actions.concat({
-                title: `抽取为自定义 I18N 变量（共${sameTextStringList.length}处）`,
+                title: `抽取为自定义 I18n 变量（共${sameTextStringList.length}处）`,
                 command: "clab-lint.extractI18N",
                 arguments: [
                   {
@@ -105,86 +106,76 @@ export function activate(context: vscode.ExtensionContext) {
     );
   }
 
-  const currentFilename = activeEditor!.document.fileName;
-  const suggestPageRegex = /\/pages\/\w+\/([^\/]+)\/([^\/\.]+)/;
-  let suggestion: RegExpMatchArray | null = [];
-  if (currentFilename.includes("/pages/")) {
-    suggestion = currentFilename.match(suggestPageRegex);
-    if (suggestion) {
-      suggestion.shift();
+  let suggestionPath = "";
+  function setSuggestionPath() {
+    const currentFilename = activeEditor!.document.fileName;
+
+    if (currentFilename.includes("/src/")) {
+      suggestionPath = currentFilename
+        .split("/src/")
+        .pop()!
+        .replace(/\//g, ".")
+        .replace(/\.[^.]+$/, ".");
+    } else {
+      suggestionPath = "";
     }
   }
 
-  /** 如果没有匹配到 Key */
-  if (!(suggestion && suggestion.length)) {
-    const names = currentFilename.split("/") as string[];
-    const fileName = names[names.length - 2];
-    const fileKey = fileName.split(".")[0].replace(new RegExp("-", "g"), "_");
-    const dir = names[names.length - 2].replace(new RegExp("-", "g"), "_");
-    if (dir === fileKey) {
-      suggestion = [dir];
-    } else {
-      suggestion = [dir, fileKey];
-    }
-  }
+  setSuggestionPath();
+
   // 点击小灯泡后进行替换操作
   context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "vscode-i18n-linter.extractI18N",
-      (args) => {
-        return new Promise((resolve) => {
-          // 若变量名已确定则直接开始替换
-          if (args.varName) {
-            return resolve(args.varName);
-          }
-          // 否则要求用户输入变量名
-          return resolve(
-            vscode.window.showInputBox({
-              prompt:
-                "请输入变量名，格式 `I18N.[page].[key]`，按 <回车> 启动替换",
-              value: `I18N.${
-                suggestion?.length ? suggestion.join(".") + "." : ""
-              }`,
-              validateInput(input) {
-                if (!input.match(/^I18N\.\w+\.\w+/)) {
-                  return "变量名格式 `I18N.[page].[key]`，如 `I18N.dim.new`，[key] 中可包含更多 `.`";
-                }
-              },
-            })
-          );
-        }).then((val: any) => {
-          // 没有输入变量名
-          if (!val) {
-            return;
-          }
-          const finalArgs = Array.isArray(args.targets)
-            ? args.targets
-            : [args.targets];
-          return finalArgs
-            .reverse()
-            .reduce((prev: Promise<any>, curr: TargetStr, index: number) => {
-              return prev.then(() => {
-                const isEditCommon = val.startsWith("I18N.common.");
-                return replaceAndUpdate(
-                  curr,
-                  val,
-                  !isEditCommon && index === 0 ? !args.varName : false
-                );
-              });
-            }, Promise.resolve())
-            .then(
-              () => {
-                vscode.window.showInformationMessage(
-                  `成功替换 ${finalArgs.length} 处文案`
-                );
-              },
-              (err: any) => {
-                console.log(err, "err");
+    vscode.commands.registerCommand("clab-lint.extractI18N", (args) => {
+      return new Promise((resolve) => {
+        // 若变量名已确定则直接开始替换
+        if (args.varName) {
+          return resolve(args.varName);
+        }
+        // 否则要求用户输入变量名
+        return resolve(
+          vscode.window.showInputBox({
+            prompt:
+              "请输入变量名，格式 `I18n.[folder].[entity]`，按 <回车> 启动替换",
+            value: `I18n.${suggestionPath}`,
+            validateInput(input) {
+              if (!input.match(/^I18n\.\w+(\.\w+)+$/)) {
+                return "变量名格式 `I18n.[folder].[entity]`，如 `I18n.domains.trait_manage`，[key] 中可包含更多 `.`";
               }
-            );
-        });
-      }
-    )
+            },
+          })
+        );
+      }).then((val: any) => {
+        // 没有输入变量名
+        if (!val) {
+          return;
+        }
+        const finalArgs = Array.isArray(args.targets)
+          ? args.targets
+          : [args.targets];
+        return finalArgs
+          .reverse()
+          .reduce((prev: Promise<any>, curr: TargetStr, index: number) => {
+            return prev.then(() => {
+              const isEditCommon = val.startsWith("I18n.common.");
+              return replaceAndUpdate(
+                curr,
+                val,
+                !isEditCommon && index === 0 ? !args.varName : false
+              );
+            });
+          }, Promise.resolve())
+          .then(
+            () => {
+              vscode.window.showInformationMessage(
+                `成功替换 ${finalArgs.length} 处文案`
+              );
+            },
+            (err: any) => {
+              console.log(err, "err");
+            }
+          );
+      });
+    })
   );
   // 当 切换文档 的时候重新检测当前文档中的中文文案
   context.subscriptions.push(
@@ -194,6 +185,7 @@ export function activate(context: vscode.ExtensionContext) {
         triggerUpdateDecorations((newTargetStringList) => {
           targetStringList = newTargetStringList;
         });
+        setSuggestionPath();
       }
     }, null)
   );
@@ -229,7 +221,7 @@ export function activate(context: vscode.ExtensionContext) {
             // 翻译中文文案
             const translatePromises = targetStringList.reduce((prev, curr) => {
               // 避免翻译的字符里包含数字或者特殊字符等情况
-              const reg = /[^a-zA-Z\x00-\xff]+/g;
+              const reg = DOUBLE_BYTE_REGEX;
               const findText = curr.text.match(reg);
               const transText = findText?.join("").slice(0, 4);
               return prev.concat(translateText(transText));
@@ -255,9 +247,7 @@ export function activate(context: vscode.ExtensionContext) {
                     const transText = translateTexts[i]
                       ? _.camelCase(translateTexts[i])
                       : uuidKey;
-                    let transKey = `${
-                      suggestion?.length ? suggestion.join(".") + "." : ""
-                    }${transText}`;
+                    let transKey = `${suggestionPath}${transText}`;
                     let occurTime = 1;
                     // 防止出现前四位相同但是整体文案不同的情况
                     while (
@@ -293,7 +283,7 @@ export function activate(context: vscode.ExtensionContext) {
                   return prev.then(() => {
                     return replaceAndUpdate(
                       obj.target,
-                      `I18N.${obj.key}`,
+                      `I18n.${obj.key}`,
                       false
                     );
                   });

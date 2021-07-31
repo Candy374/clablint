@@ -65,7 +65,7 @@ export function updateDecorations() {
   const activeEditor = vscode.window.activeTextEditor!;
   const currentFilename = activeEditor.document.fileName;
   const chineseCharDecoration = getChineseCharDecoration();
-  if (!activeEditor) {
+  if (!activeEditor || currentFilename.includes("/i18n/")) {
     return;
   }
 
@@ -78,7 +78,7 @@ export function updateDecorations() {
   targetStringList.map((match) => {
     const decoration = {
       range: match.range,
-      hoverMessage: `🐤 检测到中文文案🇨🇳 ： ${match.text}`,
+      hoverMessage: `检测到中文文案: ${match.text}`,
     };
     chineseChars.push(decoration);
   });

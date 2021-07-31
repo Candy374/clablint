@@ -10,22 +10,39 @@ import { getLangData } from "./getLangData";
 import { getLangPrefix } from "./utils";
 import { LANG_PREFIX } from "./const";
 
+function getWorkspacePath() {
+  const path = vscode.window.activeTextEditor!.document.uri.path;
+  for (const { uri } of vscode.workspace.workspaceFolders || []) {
+    if (path.startsWith(uri.fsPath)) {
+      return uri.fsPath;
+    }
+  }
+}
 export function updateLangFiles(
   keyValue: string,
   text: string,
   validateDuplicate: boolean
 ) {
-  if (!keyValue.startsWith("I18N.")) {
+  if (!keyValue.startsWith("I18n.")) {
     return;
   }
-  const [, filename, ...restPath] = keyValue.split(".");
+  let [, folder, entity, ...restPath] = keyValue.split(".");
+  let folderPath = "";
+  if (restPath.length === 1) {
+    restPath.unshift(entity);
+    folderPath = folder;
+  } else {
+    folderPath = `${folder}/${entity}`;
+  }
   const fullKey = restPath.join(".");
-  const targetFilename = `${getLangPrefix() || LANG_PREFIX}${filename}.ts`;
+  const prefixPath = getWorkspacePath();
+  const targetFilename = `${prefixPath}/src/${folderPath}/i18n/index.ts`;
+  const filename = restPath[restPath.length - 1];
 
   if (!fs.existsSync(targetFilename)) {
     fs.outputFileSync(targetFilename, generateNewLangFile(fullKey, text));
-    addImportToMainLangFile(filename);
-    vscode.window.showInformationMessage(`成功新建语言文件 ${targetFilename}`);
+    addImportToMetaFile(`${folderPath}/i18n`, entity);
+    vscode.window.showInformationMessage(`成功新建文件 ${targetFilename}`);
   } else {
     // 清除 require 缓存，解决手动更新语言文件后再自动抽取，导致之前更新失效的问题
     const mainContent = getLangData(targetFilename);
@@ -48,7 +65,9 @@ export function updateLangFiles(
     _.set(obj, fullKey, text);
     fs.writeFileSync(
       targetFilename,
-      prettierFile(`export default ${JSON.stringify(obj, null, 2)}`)
+      prettierFile(
+        `const ${entity} = ${JSON.stringify(obj)}; export default ${entity}`
+      )
     );
   }
 }
@@ -112,4 +131,34 @@ export function addImportToMainLangFile(newFilename: string) {
   }
 
   fs.outputFileSync(`${langPrefix}index.ts`, mainContent);
+}
+
+function addImportToMetaFile(relativeFilename: string, entity: string) {
+  let mainContent = "";
+
+  let mainFile = `${getWorkspacePath()}/src/i18n/translationMeta.ts`;
+  if (fs.existsSync(mainFile)) {
+    mainContent = fs.readFileSync(mainFile, "utf8");
+    if (mainContent.includes(`${entity},`)) {
+      return;
+    }
+
+    // TODO: check filename or entity is exists?
+    mainContent = mainContent
+      .replace(
+        /^(\s*import.*?;)$/m,
+        `$1\nimport ${entity} from '${relativeFilename}';`
+      )
+      .replace(/\};/, `${entity}, };`);
+
+    mainContent = prettierFile(mainContent);
+  } else {
+    mainContent = `import ${entity} from '${relativeFilename}';
+    const translationMap = {
+      ${entity},
+    };
+    export default translationMap;`;
+  }
+
+  fs.outputFileSync(mainFile, mainContent);
 }
