@@ -1,21 +1,28 @@
 {
   "name": "clab-lint",
-  "displayName": "clab-lint",
-  "description": "",
-  "version": "0.0.1",
+  "displayName": "Convertlab I18n tool",
+  "description": "a I18n tool for convertlab",
+  "version": "0.0.2",
   "publisher": "convertlab",
   "engines": {
     "vscode": "^1.57.0"
   },
   "repository": "https://github.com/Candy374/clablint",
   "categories": [
-    "Other"
+    "Other",
+    "Linters"
+  ],
+  "keywords": [
+    "React",
+    "i18n"
   ],
   "activationEvents": [
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:javascriptreact",
-    "onLanguage:javascript"
+    "onLanguage:javascript",
+    "onCommand:clab-lint.start",
+    "onCommand:clab-lint.helloWorld"
   ],
   "main": "./out/extension.js",
   "icon": "favicon.png",
@@ -24,6 +31,10 @@
       {
         "command": "clab-lint.start",
         "title": "clab-lint translate current file"
+      },
+      {
+        "command": "clab-lint.helloWorld",
+        "title": "Hello"
       }
     ],
     "configuration": {
