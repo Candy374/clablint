@@ -14,17 +14,11 @@
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
     "onLanguage:javascriptreact",
-    "onLanguage:javascript",
-    "onCommand:clab-lint.helloWorld",
-    "onCommand:clab-lint.findAllI18N"
+    "onLanguage:javascript"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "clab-lint.findAllI18N",
-        "title": "Hello findAllI18N"
-      },
       {
         "command": "clab-lint.start",
         "title": "clab-lint translate current file"

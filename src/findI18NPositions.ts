@@ -60,18 +60,12 @@ function getRegexMatches(I18N: any, code: string) {
       exps = exps.split("'")[0];
       exps = exps.split(" ")[0];
 
-      const currentFilename = vscode.window.activeTextEditor!.document.uri.path;
-      const [filePrefix, filePath] = currentFilename.split("/src/");
-
-      const filePathPrefix = getFolderArr(filePath).join(".");
-
-      const code = exps.replace(filePathPrefix, "").replace(/^\./, "");
       const position = new Position();
-      const transformedCn = _.get(I18N, code.split("."));
+      const transformedCn = I18N[exps];
       if (typeof transformedCn === "string") {
         position.cn = transformedCn;
         (position as any).line = index;
-        position.code = code;
+        position.code = exps;
         positions.push(position);
       }
     }

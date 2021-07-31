@@ -3,8 +3,8 @@
 import * as vscode from "vscode";
 import { triggerUpdateDecorations } from "./chineseCharDecorations";
 import { TargetStr } from "./define";
-import { findAllI18N } from "./findAllI18N";
-import { getI18N, getKeyByValueMap } from "./getLangData";
+
+import { getI18N } from "./getLangData";
 import { replaceAndUpdate } from "./replaceAndUpdate";
 import { findMatchKey, getConfiguration } from "./utils";
 import * as randomstring from "randomstring";
@@ -13,9 +13,10 @@ import _ = require("lodash");
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand("clab-lint.findAllI18N", findAllI18N)
-  );
+  // context.subscriptions.push(
+  //   vscode.commands.registerCommand("clab-lint.findAllI18N", findAllI18N)
+  // );
+
   // Use the console to output diagnostic information (console.log) and errors (console.error)
   // This line of code will only be executed once when your extension is activated
   console.log('Congratulations, your extension "clab-lint" is now active!');
@@ -75,18 +76,19 @@ export function activate(context: vscode.ExtensionContext) {
               }[] = [];
               finalLangObj = getI18N();
 
-              const key = getKeyByValueMap(finalLangObj, text);
-              if (key) {
-                actions.push({
-                  title: `抽取为 \`I18n.${key}\``,
-                  command: "clab-lint.extractI18N",
-                  arguments: [
-                    {
-                      targets: sameTextStringList,
-                      varName: `I18n.${key}`,
-                    },
-                  ],
-                });
+              for (const key of Object.keys(finalLangObj)) {
+                if (finalLangObj[key] === text) {
+                  actions.push({
+                    title: `抽取为 \`I18n.${key}\``,
+                    command: "clab-lint.extractI18N",
+                    arguments: [
+                      {
+                        targets: sameTextStringList,
+                        varName: `I18n.${key}`,
+                      },
+                    ],
+                  });
+                }
               }
 
               return actions.concat({

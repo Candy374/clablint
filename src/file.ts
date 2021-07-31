@@ -134,17 +134,6 @@ function addImportToMetaFile(relativeFilename: string, folders: string[]) {
     mainContent = `${importStrings} ${importString}; ${constStr} ${content};
     export default translationMap`;
 
-    // if (mainContent.includes(`${entity},`)) {
-    //   return;
-    // }
-
-    // mainContent = mainContent
-    //   .replace(
-    //     /^(\s*import.*?;)$/m,
-    //     `$1\nimport ${entity} from '${relativeFilename}';`
-    //   )
-    //   .replace(/\};/, `${entity}, };`);
-
     mainContent = prettierFile(mainContent);
 
     vscode.window.showInformationMessage(`成功引入新的翻译文件 ${entity}`);
