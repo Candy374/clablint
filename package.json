@@ -32,6 +32,21 @@
           "type": "boolean",
           "default": true,
           "description": "Add a light blob beside string literal and provide I18N variable replacement suggestions"
+        },
+        "clab-lint.markStringLiterals": {
+          "type": "boolean",
+          "default": true,
+          "description": "Mark string literals in editor so you can quickly spot on them"
+        },
+        "clab-lint.showOverviewRuler": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show non-English letter position on the overview ruler"
+        },
+        "clab-lint.markColor": {
+          "type": "string",
+          "default": "#f40",
+          "description": "The color of matched non-English letters"
         }
       }
     }

@@ -46,8 +46,8 @@ export function activate(context: vscode.ExtensionContext) {
   }
 
   // 识别到出错时点击小灯泡弹出的操作
-  // TODO: get setting
-  const hasLightBulb = getConfiguration("enableReplaceSuggestion") || true;
+
+  const hasLightBulb = getConfiguration("enableReplaceSuggestion");
   if (hasLightBulb) {
     context.subscriptions.push(
       vscode.languages.registerCodeActionsProvider(

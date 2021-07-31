@@ -13,10 +13,8 @@ import { getConfiguration } from "./utils";
  */
 function getChineseCharDecoration() {
   // 配置提示框样式
-  const hasOverviewRuler = true;
-  // const hasOverviewRuler = getConfiguration("showOverviewRuler");
-  const shouldMark = true;
-  // const shouldMark = getConfiguration("markStringLiterals");
+  const hasOverviewRuler = getConfiguration("showOverviewRuler");
+  const shouldMark = getConfiguration("markStringLiterals");
   const color = getConfiguration("markColor");
   return vscode.window.createTextEditorDecorationType({
     borderWidth: shouldMark ? "1px" : undefined,
@@ -83,10 +81,10 @@ export function updateDecorations() {
     chineseChars.push(decoration);
   });
 
-  // const shouldMark = getConfiguration("markStringLiterals");
-  // if (shouldMark !== true) {
-  //   return;
-  // }
+  const shouldMark = getConfiguration("markStringLiterals");
+  if (shouldMark !== true) {
+    return;
+  }
 
   /** 设置 I18N 的提示 */
   setLineDecorations(activeEditor);

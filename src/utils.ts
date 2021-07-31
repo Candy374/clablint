@@ -114,7 +114,7 @@ export function getLangJsonFromContent(fileContent: string): {
  * 获取配置，支持从vscode和配置文件(优先)中取到配置项
  */
 export function getConfiguration(text: string): any {
-  const configs = vscode.workspace.getConfiguration("clab-linter");
+  const configs = vscode.workspace.getConfiguration("clab-lint");
 
   const value = configs.get(text);
   return value;
