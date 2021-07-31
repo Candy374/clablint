@@ -5,7 +5,8 @@
 
 import { TargetStr } from "./define";
 import * as vscode from "vscode";
-import { updateLangFiles } from "./file";
+import * as fs from "fs-extra";
+import { prettierFile, updateLangFiles } from "./file";
 /**
  * 更新文件
  * @param arg  目标字符串对象
@@ -64,6 +65,8 @@ export function replaceAndUpdate(
     // edit.replace(document.uri, arg.range, "{" + val + "}");
   }
 
+  addImportString(document, edit);
+
   try {
     // 更新语言文件
     updateLangFiles(val, finalReplaceText, validateDuplicate);
@@ -71,5 +74,23 @@ export function replaceAndUpdate(
     return vscode.workspace.applyEdit(edit);
   } catch (e) {
     return Promise.reject(e.message);
+  }
+}
+
+function addImportString(
+  document: vscode.TextDocument,
+  edit: vscode.WorkspaceEdit
+) {
+  const importI18nStr = `import { I18n } from 'i18n/dev';\n`;
+  const importTranslateStr = `import { translate } from 'i18n/translate';\n`;
+
+  const content = document.getText();
+
+  if (!content.includes(importI18nStr)) {
+    edit.insert(document.uri, new vscode.Position(0, 0), importI18nStr);
+  }
+
+  if (!content.includes(importTranslateStr)) {
+    edit.insert(document.uri, new vscode.Position(0, 0), importTranslateStr);
   }
 }

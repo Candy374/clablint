@@ -80,7 +80,7 @@ export function updateLangFiles(
  * 使用 Prettier 格式化文件
  * @param fileContent
  */
-function prettierFile(fileContent: string) {
+export function prettierFile(fileContent: string) {
   try {
     return prettier.format(fileContent, {
       parser: "typescript",
