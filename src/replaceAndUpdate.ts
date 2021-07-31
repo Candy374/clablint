@@ -65,15 +65,11 @@ export function replaceAndUpdate(
     // edit.replace(document.uri, arg.range, "{" + val + "}");
   }
 
-  try {
-    // 更新语言文件
-    updateLangFiles(val, finalReplaceText, validateDuplicate);
+  // 更新语言文件
+  updateLangFiles(val, finalReplaceText, validateDuplicate);
 
-    // 若更新成功再替换代码
-    return vscode.workspace.applyEdit(edit);
-  } catch (e) {
-    throw new Error(e);
-  }
+  // 若更新成功再替换代码
+  return vscode.workspace.applyEdit(edit);
 }
 
 export function addImportString() {

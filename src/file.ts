@@ -33,7 +33,7 @@ export function updateLangFiles(
   }
   let [, folder, entity, ...restPath] = keyValue.split(".");
   let folderPath = "";
-  if (restPath.length === 1) {
+  if (restPath.length <= 1) {
     restPath.unshift(entity);
     folderPath = folder;
   } else {
@@ -41,7 +41,10 @@ export function updateLangFiles(
   }
   const fullKey = restPath.join(".");
   const prefixPath = getWorkspacePath();
-  const targetFilename = `${prefixPath}/src/${folderPath}/i18n/index.ts`;
+  const targetFilename =
+    folderPath === "common"
+      ? `${prefixPath}/src/i18n/common.ts`
+      : `${prefixPath}/src/${folderPath}/i18n/index.ts`;
   const filename = restPath[restPath.length - 1];
 
   if (!fs.existsSync(targetFilename)) {
@@ -55,13 +58,13 @@ export function updateLangFiles(
 
     if (Object.keys(obj).length === 0) {
       vscode.window.showWarningMessage(
-        `${filename} 解析失败，该文件包含的文案无法自动补全`
+        `解析失败，该文件包含的文案无法自动补全： ${filename}`
       );
     }
 
     if (validateDuplicate && _.get(obj, fullKey) !== undefined) {
       vscode.window.showErrorMessage(
-        `${targetFilename} 中已存在 key 为 \`${fullKey}\` 的翻译，请重新命名变量`
+        `已存在 key 为 \`${fullKey}\` 的翻译，请重新命名变量. 重名变量在： ${targetFilename}`
       );
       throw new Error("duplicate");
     }

@@ -110,15 +110,14 @@ export function activate(context: vscode.ExtensionContext) {
 
   // 点击小灯泡后进行替换操作
   context.subscriptions.push(
-    vscode.commands.registerCommand("clab-lint.extractI18N", (args) => {
-      return new Promise((resolve) => {
-        // 若变量名已确定则直接开始替换
-        if (args.varName) {
-          return resolve(args.varName);
-        }
-        // 否则要求用户输入变量名
-        return resolve(
-          vscode.window.showInputBox({
+    vscode.commands.registerCommand(
+      "clab-lint.extractI18N",
+      async ({ varName, targets }) => {
+        let val;
+        if (varName) {
+          val = varName;
+        } else {
+          val = await vscode.window.showInputBox({
             prompt:
               "请输入变量名，格式 `I18n.[folder].[entity]`，按 <回车> 启动替换",
             value: `I18n.${suggestionPath}`,
@@ -127,40 +126,35 @@ export function activate(context: vscode.ExtensionContext) {
                 return "变量名格式 `I18n.[folder].[entity]`，如 `I18n.domains.trait_manage`，[key] 中可包含更多 `.`";
               }
             },
-          })
-        );
-      }).then((val: any) => {
+          });
+        }
+
         // 没有输入变量名
         if (!val) {
           return;
         }
-        const finalArgs = Array.isArray(args.targets)
-          ? args.targets
-          : [args.targets];
-        return finalArgs
-          .reverse()
-          .reduce((prev: Promise<any>, curr: TargetStr, index: number) => {
-            return prev.then(() => {
-              const isEditCommon = val.startsWith("I18n.common.");
-              return replaceAndUpdate(
-                curr,
-                val,
-                !isEditCommon && index === 0 ? !args.varName : false
-              );
-            });
-          }, Promise.resolve())
-          .then(
-            () => {
-              vscode.window.showInformationMessage(
-                `成功替换 ${finalArgs.length} 处文案`
-              );
-            },
-            (err: any) => {
-              console.log(err, "err");
+
+        try {
+          const finalArgs = Array.isArray(targets) ? targets : [targets];
+
+          let needCheckDup = !varName;
+          let checked = false;
+          for (const { curr } of finalArgs.reverse()) {
+            await replaceAndUpdate(curr, val, needCheckDup && !checked);
+            if (needCheckDup) {
+              checked = true;
             }
+          }
+
+          addImportString();
+          vscode.window.showInformationMessage(
+            `成功替换 ${finalArgs.length} 处文案`
           );
-      });
-    })
+        } catch (err) {
+          console.log(err, "err");
+        }
+      }
+    )
   );
   // 当 切换文档 的时候重新检测当前文档中的中文文案
   context.subscriptions.push(
