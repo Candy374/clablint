@@ -83,6 +83,12 @@ export function getAllFiles(dir: string): any {
  */
 export function getLangJson(fileName: string): { [key: string]: any } {
   const fileContent = fs.readFileSync(fileName, { encoding: "utf8" });
+  return getLangJsonFromContent(fileContent);
+}
+
+export function getLangJsonFromContent(fileContent: string): {
+  [key: string]: any;
+} {
   let obj;
   let jsObj = {};
   if (fileContent.match(/export\s*default\s*({[\s\S]+);?$/)) {

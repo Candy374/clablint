@@ -7,7 +7,7 @@ import * as fs from "fs-extra";
 import * as _ from "lodash";
 import * as prettier from "prettier";
 import { getLangData } from "./getLangData";
-import { getLangPrefix } from "./utils";
+import { getLangJsonFromContent, getLangPrefix } from "./utils";
 import { LANG_PREFIX } from "./const";
 
 function getWorkspacePath() {
@@ -36,7 +36,6 @@ export function updateLangFiles(
   if (restPath.length === 1) {
     restPath.unshift(entity);
     folderPath = folder;
-    entity = folder;
   } else {
     folderPath = `${folder}/${entity}`;
   }
@@ -48,7 +47,7 @@ export function updateLangFiles(
   if (!fs.existsSync(targetFilename)) {
     fs.outputFileSync(targetFilename, generateNewLangFile(fullKey, text));
     vscode.window.showInformationMessage(`成功新建文件 ${targetFilename}`);
-    addImportToMetaFile(`${folderPath}/i18n`, entity);
+    addImportToMetaFile(`${folderPath}/i18n`, folderPath.split("/"));
   } else {
     // 清除 require 缓存，解决手动更新语言文件后再自动抽取，导致之前更新失效的问题
     const mainContent = getLangData(targetFilename);
@@ -100,61 +99,51 @@ export function generateNewLangFile(key: string, value: string) {
   return prettierFile(`export default ${JSON.stringify(obj, null, 2)}`);
 }
 
-export function addImportToMainLangFile(newFilename: string) {
-  let mainContent = "";
-  const langPrefix = getLangPrefix() || LANG_PREFIX;
-  if (fs.existsSync(`${langPrefix}index.ts`)) {
-    mainContent = fs.readFileSync(`${langPrefix}index.ts`, "utf8");
-    mainContent = mainContent.replace(
-      /^(\s*import.*?;)$/m,
-      `$1\nimport ${newFilename} from './${newFilename}';`
-    );
-
-    if (/\n(}\);)/.test(mainContent)) {
-      if (/\,\n(}\);)/.test(mainContent)) {
-        /** 最后一行包含,号 */
-        mainContent = mainContent.replace(/(}\);)/, `  ${newFilename},\n$1`);
-      } else {
-        /** 最后一行不包含,号 */
-        mainContent = mainContent.replace(
-          /\n(}\);)/,
-          `,\n  ${newFilename},\n$1`
-        );
-      }
-    }
-
-    if (/\n(};)/.test(mainContent)) {
-      if (/\,\n(};)/.test(mainContent)) {
-        /** 最后一行包含,号 */
-        mainContent = mainContent.replace(/(};)/, `  ${newFilename},\n$1`);
-      } else {
-        /** 最后一行不包含,号 */
-        mainContent = mainContent.replace(/\n(};)/, `,\n  ${newFilename},\n$1`);
-      }
-    }
-  } else {
-    mainContent = `import ${newFilename} from './${newFilename}';\n\nexport default Object.assign({}, {\n  ${newFilename},\n});`;
-  }
-
-  fs.outputFileSync(`${langPrefix}index.ts`, mainContent);
-}
-
-function addImportToMetaFile(relativeFilename: string, entity: string) {
+function addImportToMetaFile(relativeFilename: string, folders: string[]) {
   let mainContent = "";
 
   let mainFile = getMainTranslateFile();
+  const [folder, entity = folder] = folders;
   if (fs.existsSync(mainFile)) {
     mainContent = fs.readFileSync(mainFile, "utf8");
-    if (mainContent.includes(`${entity},`)) {
+
+    const constStr = "const translationMap = ";
+    const [importStrings, others] = mainContent.split(constStr);
+
+    const importString = `import ${entity} from '${relativeFilename}'`;
+    if (importStrings.split("\n").includes(importString)) {
       return;
     }
 
-    mainContent = mainContent
-      .replace(
-        /^(\s*import.*?;)$/m,
-        `$1\nimport ${entity} from '${relativeFilename}';`
-      )
-      .replace(/\};/, `${entity}, };`);
+    const transMap = getLangJsonFromContent(
+      `${constStr} ${others.replace(/(\w)(\s?}?,)/g, "$1:''$2")}`
+    );
+    if (_.get(transMap, folders.join(".")) !== undefined) {
+      return;
+    }
+
+    _.set(transMap, folders.join("."), "");
+    const content = JSON.stringify(transMap)
+      .replace(/:""/g, "")
+      .replace(/{"/g, "{")
+      .replace(/"}/g, "}")
+      .replace(/",/g, ",")
+      .replace(/,"/g, ",")
+      .replace(/":/g, ":");
+
+    mainContent = `${importStrings} ${importString}; ${constStr} ${content};
+    export default translationMap`;
+
+    // if (mainContent.includes(`${entity},`)) {
+    //   return;
+    // }
+
+    // mainContent = mainContent
+    //   .replace(
+    //     /^(\s*import.*?;)$/m,
+    //     `$1\nimport ${entity} from '${relativeFilename}';`
+    //   )
+    //   .replace(/\};/, `${entity}, };`);
 
     mainContent = prettierFile(mainContent);
 
