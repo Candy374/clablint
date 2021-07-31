@@ -1,35 +1,30 @@
 /**
- * @author doubledream
+ * @author linhuiw
  * @desc 利用 Ast 查找对应文件中的中文文案
  */
+import * as ts from "typescript";
+import * as vscode from "vscode";
 
-import * as ts from 'typescript';
-
-const DOUBLE_BYTE_REGEX = /[^\x00-\xff]/g;
-/**
- * 去掉文件中的注释
- * @param code
- * @param fileName
- */
-function removeFileComment(code: string, fileName: string) {
-  const printer = ts.createPrinter({ removeComments: true });
-  const sourceFile = ts.createSourceFile(
-    '',
-    code,
-    ts.ScriptTarget.ES2015,
-    true,
-    fileName.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS
-  );
-  return printer.printFile(sourceFile);
-}
+import { DOUBLE_BYTE_REGEX } from "./const";
+import { trimWhiteSpace } from "./parserUtils";
+import { removeFileComment } from "./astUtils";
 
 /**
  * 查找 Ts 文件中的中文
  * @param code
  */
+
 function findTextInTs(code: string, fileName: string) {
-  const matches: { range: { start: number; end: number; } | { start: number; end: number; } | { start: number; end: number; } | { start: number; end: number; }; text: string; isString: boolean; }[] = [];
-  const ast = ts.createSourceFile('', code, ts.ScriptTarget.ES2015, true, ts.ScriptKind.TSX);
+  const matches: { range: vscode.Range; text: string; isString: boolean }[] =
+    [];
+  const activeEditor = vscode.window.activeTextEditor!;
+  const ast = ts.createSourceFile(
+    "",
+    code,
+    ts.ScriptTarget.ES2015,
+    true,
+    ts.ScriptKind.TSX
+  );
 
   function visit(node: ts.Node) {
     switch (node.kind) {
@@ -39,11 +34,14 @@ function findTextInTs(code: string, fileName: string) {
         if (text.match(DOUBLE_BYTE_REGEX)) {
           const start = node.getStart();
           const end = node.getEnd();
-          const range = { start, end };
+          /** 加一，减一的原因是，去除引号 */
+          const startPos = activeEditor.document.positionAt(start + 1);
+          const endPos = activeEditor.document.positionAt(end - 1);
+          const range = new vscode.Range(startPos, endPos);
           matches.push({
             range,
             text,
-            isString: true
+            isString: true,
           });
         }
         break;
@@ -51,7 +49,7 @@ function findTextInTs(code: string, fileName: string) {
       case ts.SyntaxKind.JsxElement: {
         const { children } = node as ts.JsxElement;
 
-        children.forEach(child => {
+        children.forEach((child) => {
           if (child.kind === ts.SyntaxKind.JsxText) {
             const text = child.getText();
             /** 修复注释含有中文的情况，Angular 文件错误的 Ast 情况 */
@@ -60,12 +58,19 @@ function findTextInTs(code: string, fileName: string) {
             if (noCommentText.match(DOUBLE_BYTE_REGEX)) {
               const start = child.getStart();
               const end = child.getEnd();
-              const range = { start, end };
+              const startPos = activeEditor.document.positionAt(start);
+              const endPos = activeEditor.document.positionAt(end);
+              const { trimStart, trimEnd } = trimWhiteSpace(
+                code,
+                startPos,
+                endPos
+              );
+              const range = new vscode.Range(trimStart, trimEnd);
 
               matches.push({
                 range,
                 text: text.trim(),
-                isString: false
+                isString: false,
               });
             }
           }
@@ -74,35 +79,44 @@ function findTextInTs(code: string, fileName: string) {
       }
       case ts.SyntaxKind.TemplateExpression: {
         const { pos, end } = node;
-        const templateContent = code.slice(pos, end);
-
+        let templateContent = code.slice(pos, end);
+        templateContent = templateContent
+          .toString()
+          .replace(/\$\{[^\}]+\}/, "");
         if (templateContent.match(DOUBLE_BYTE_REGEX)) {
           const start = node.getStart();
           const end = node.getEnd();
-          const range = { start, end };
+          /** 加一，减一的原因是，去除`号 */
+          const startPos = activeEditor.document.positionAt(start + 1);
+          const endPos = activeEditor.document.positionAt(end - 1);
+          const range = new vscode.Range(startPos, endPos);
           matches.push({
             range,
             text: code.slice(start + 1, end - 1),
-            isString: true
+            isString: true,
           });
         }
         break;
       }
-      case ts.SyntaxKind.NoSubstitutionTemplateLiteral: {
+      case ts.SyntaxKind.NoSubstitutionTemplateLiteral:
         const { pos, end } = node;
-        const templateContent = code.slice(pos, end);
-
+        let templateContent = code.slice(pos, end);
+        templateContent = templateContent
+          .toString()
+          .replace(/\$\{[^\}]+\}/, "");
         if (templateContent.match(DOUBLE_BYTE_REGEX)) {
           const start = node.getStart();
           const end = node.getEnd();
-          const range = { start, end };
+          /** 加一，减一的原因是，去除`号 */
+          const startPos = activeEditor.document.positionAt(start + 1);
+          const endPos = activeEditor.document.positionAt(end - 1);
+          const range = new vscode.Range(startPos, endPos);
           matches.push({
             range,
             text: code.slice(start + 1, end - 1),
-            isString: true
+            isString: true,
           });
         }
-      }
     }
 
     ts.forEachChild(node, visit);
@@ -112,13 +126,6 @@ function findTextInTs(code: string, fileName: string) {
   return matches;
 }
 
-
-/**
- * 递归匹配代码的中文
- * @param code
- */
-function findChineseText(code: string, fileName: string) {
+export function findChineseText(code: string, fileName: string) {
   return findTextInTs(code, fileName);
 }
-
-export { findChineseText };

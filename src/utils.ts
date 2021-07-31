@@ -2,25 +2,26 @@
  * @author linhuiw
  * @desc 工具方法
  */
-import * as _ from 'lodash';
-import * as vscode from 'vscode';
-import * as fs from 'fs-extra';
-import * as path from 'path';
+import * as _ from "lodash";
+import * as vscode from "vscode";
+import * as fs from "fs-extra";
+import * as path from "path";
+import randomstring = require("randomstring");
 
 /**
  * 将对象拍平
  * @param obj    原始对象
  * @param prefix
  */
-export function flatten(obj: {[key:string]: any}, prefix?: string) {
-  var propName = prefix ? prefix + '.' : '',
-    ret = {} as {[key:string]: any} ;
+export function flatten(obj: { [key: string]: any }, prefix?: string) {
+  var propName = prefix ? prefix + "." : "",
+    ret = {} as { [key: string]: any };
 
   for (var attr in obj) {
     if (_.isArray(obj[attr])) {
       var len = obj[attr].length;
-      ret[attr] = obj[attr].join(',');
-    } else if (typeof obj[attr] === 'object') {
+      ret[attr] = obj[attr].join(",");
+    } else if (typeof obj[attr] === "object") {
       _.extend(ret, flatten(obj[attr], propName + attr));
     } else {
       ret[propName + attr] = obj[attr];
@@ -33,8 +34,8 @@ export function flatten(obj: {[key:string]: any}, prefix?: string) {
  * 查找当前位置的 Code
  */
 export function findPositionInCode(text: string, code: string) {
-  const lines = code.split('\n');
-  const lineNum = lines.findIndex(line => line.includes(text));
+  const lines = code.split("\n");
+  const lineNum = lines.findIndex((line) => line.includes(text));
 
   if (lineNum === -1) {
     return null;
@@ -42,14 +43,14 @@ export function findPositionInCode(text: string, code: string) {
 
   let chNum = lines[lineNum].indexOf(text);
 
-  if (text.startsWith(' ')) {
+  if (text.startsWith(" ")) {
     chNum += 1;
   }
 
   return new vscode.Position(lineNum, chNum);
 }
 
-export function findMatchKey(langObj: { [x: string]: any; }, text: any) {
+export function findMatchKey(langObj: { [x: string]: any }, text: any) {
   for (const key in langObj) {
     if (langObj[key] === text) {
       return key;
@@ -65,10 +66,10 @@ export function findMatchKey(langObj: { [x: string]: any; }, text: any) {
  * @param  {string} dir Dir path string.
  * @return {string[]} Array with all file names that are inside the directory.
  */
-export function getAllFiles  (dir: string): any {
+export function getAllFiles(dir: string): any {
   fs.readdirSync(dir).reduce((files: any, file: string) => {
     // 避免读取node_modules造成性能问题
-    if (file === 'node_modules') {
+    if (file === "node_modules") {
       return [...files];
     }
     const name = path.join(dir, file);
@@ -80,13 +81,13 @@ export function getAllFiles  (dir: string): any {
 /**
  * 获取文件 Json
  */
-export function getLangJson(fileName: string) : {[key: string]: any} {
-  const fileContent = fs.readFileSync(fileName, { encoding: 'utf8' });
+export function getLangJson(fileName: string): { [key: string]: any } {
+  const fileContent = fs.readFileSync(fileName, { encoding: "utf8" });
   let obj = fileContent.match(/export\s*default\s*({[\s\S]+);?$/)?.[1];
-  obj = obj?.replace(/\s*;\s*$/, '');
+  obj = obj?.replace(/\s*;\s*$/, "");
   let jsObj = {};
   try {
-    jsObj = eval('(' + obj + ')');
+    jsObj = eval("(" + obj + ")");
   } catch (err) {
     console.log(obj);
     console.error(err);
@@ -97,12 +98,12 @@ export function getLangJson(fileName: string) : {[key: string]: any} {
 /**
  * 获取配置，支持从vscode和配置文件(优先)中取到配置项
  */
-export function getConfiguration (text: string): any {
-  const configs = vscode.workspace.getConfiguration('clab-linter');
+export function getConfiguration(text: string): any {
+  const configs = vscode.workspace.getConfiguration("clab-linter");
 
-  const value = configs.get(text)
+  const value = configs.get(text);
   return value;
-};
+}
 
 /**
  * 查找kiwi-cli配置文件
@@ -132,21 +133,23 @@ export const getKiwiLinterConfigFile = () => {
   return kiwiConfigJson;
 };
 
-
 /**
  * 重试方法
  * @param asyncOperation
  * @param times
  */
-function retry(asyncOperation: { (): Promise<any>; (): Promise<any>; }, times = 1) {
+function retry(
+  asyncOperation: { (): Promise<any>; (): Promise<any> },
+  times = 1
+) {
   let runTimes = 1;
-  function handleReject(e: any): any{
+  function handleReject(e: any): any {
     if (runTimes++ < times) {
       return asyncOperation().catch(handleReject);
     } else {
       throw e;
     }
-  };
+  }
   return asyncOperation().catch(handleReject);
 }
 
@@ -168,19 +171,29 @@ function withTimeout(promise: Promise<unknown>, ms: number | undefined) {
  * 翻译中文
  */
 export function translateText(text: any) {
-  // const googleApiKey = getGoogleApiKey();
-  // const { translate: googleTranslate } = require('google-translate')(googleApiKey);
+  const uuidKey = `${randomstring.generate({
+    length: 4,
+    charset: "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
+  })}`;
+
+  return uuidKey + text;
 
   // function _translateText() {
   //   return withTimeout(
   //     new Promise((resolve, reject) => {
-  //       googleTranslate(text, 'zh', 'en', (err: any, translation: { translatedText: unknown; }) => {
-  //         if (err) {
-  //           reject(err);
-  //         } else {
-  //           resolve(translation.translatedText);
-  //         }
-  //       });
+  //       // googleTranslate(
+  //       //   text,
+  //       //   "zh",
+  //       //   "en",
+  //       //   (err: any, translation: { translatedText: unknown }) => {
+  //       //     if (err) {
+  //       //       reject(err);
+  //       //     } else {
+  //       //       resolve(translation.translatedText);
+  //       //     }
+  //       //   }
+  //       // );
+  //       // TODO: translate text
   //     }),
   //     3000
   //   );
@@ -202,8 +215,10 @@ export function getTargetLangPath(currentFilePath: string | string[]) {
  * 获取当前文件对应的项目路径
  */
 export function getCurrentProjectLangPath() {
-  let currentProjectLangPath = '';
-  const targetLangPath = getTargetLangPath(vscode.window.activeTextEditor!.document.uri.path);
+  let currentProjectLangPath = "";
+  const targetLangPath = getTargetLangPath(
+    vscode.window.activeTextEditor!.document.uri.path
+  );
   if (targetLangPath) {
     currentProjectLangPath = `${targetLangPath}**/*.ts`;
   }
@@ -213,7 +228,9 @@ export function getCurrentProjectLangPath() {
 /**
  * 获取当前文件对应的语言路径
  */
- export function getLangPrefix() {
-  const langPrefix = getTargetLangPath(vscode.window.activeTextEditor!.document.uri.path);
+export function getLangPrefix() {
+  const langPrefix = getTargetLangPath(
+    vscode.window.activeTextEditor!.document.uri.path
+  );
   return langPrefix;
 }
