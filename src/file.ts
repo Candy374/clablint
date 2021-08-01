@@ -36,9 +36,6 @@ export function updateLangFiles(
   if (restPath.length <= 1) {
     restPath.unshift(entity);
     folderPath = folder;
-    if (folder === "common") {
-      entity = "common";
-    }
   } else {
     folderPath = `${folder}/${entity}`;
   }
@@ -81,9 +78,7 @@ export function updateLangFiles(
     _.set(obj, fullKey, text);
     fs.writeFileSync(
       targetFilename,
-      prettierFile(
-        `const ${entity} = ${JSON.stringify(obj)}; export default ${entity}`
-      )
+      prettierFile(`export default ${JSON.stringify(obj)};`)
     );
   }
 }
