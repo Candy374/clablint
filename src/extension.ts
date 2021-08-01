@@ -139,7 +139,7 @@ export function activate(context: vscode.ExtensionContext) {
 
           let needCheckDup = !varName;
           let checked = false;
-          for (const { curr } of finalArgs.reverse()) {
+          for (const curr of finalArgs.reverse()) {
             await replaceAndUpdate(curr, val, needCheckDup && !checked);
             if (needCheckDup) {
               checked = true;

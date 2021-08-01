@@ -36,6 +36,9 @@ export function updateLangFiles(
   if (restPath.length <= 1) {
     restPath.unshift(entity);
     folderPath = folder;
+    if (folder === "common") {
+      entity = "common";
+    }
   } else {
     folderPath = `${folder}/${entity}`;
   }
@@ -62,12 +65,17 @@ export function updateLangFiles(
       );
     }
 
-    if (validateDuplicate && _.get(obj, fullKey) !== undefined) {
-      vscode.window.showErrorMessage(
-        `已存在 key 为 \`${fullKey}\` 的翻译，请重新命名变量. 重名变量在： ${targetFilename}`
-      );
-      throw new Error("duplicate");
+    if (_.get(obj, fullKey) !== undefined) {
+      if (validateDuplicate) {
+        vscode.window.showErrorMessage(
+          `已存在 key 为 \`${fullKey}\` 的翻译，请重新命名变量. 重名变量在： ${targetFilename}`
+        );
+        throw new Error("duplicate");
+      } else {
+        return;
+      }
     }
+
     // \n 会被自动转义成 \\n，这里转回来
     text = text.replace(/\\n/gm, "\n");
     _.set(obj, fullKey, text);
