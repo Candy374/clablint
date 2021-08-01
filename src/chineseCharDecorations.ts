@@ -63,7 +63,11 @@ export function updateDecorations() {
   const activeEditor = vscode.window.activeTextEditor!;
   const currentFilename = activeEditor.document.fileName;
   const chineseCharDecoration = getChineseCharDecoration();
-  if (!activeEditor || currentFilename.includes("/i18n/")) {
+  if (
+    !activeEditor ||
+    currentFilename.includes("/i18n/") ||
+    currentFilename.match(/spec\.(tsx|ts)$/)
+  ) {
     return;
   }
 
