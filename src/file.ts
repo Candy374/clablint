@@ -129,6 +129,16 @@ function addImportToMetaFile(relativeFilename: string, folders: string[]) {
     const transMap = getLangJsonFromContent(
       `${constStr} ${others.replace(/(\w)(\s?}?,)/g, "$1:''$2")}`
     );
+
+    if (Object.keys(transMap).length === 0) {
+      vscode.window.showInformationMessage(
+        `引入新的翻译文件失败，请手动在文件${mainFile}中添加 ${importString} ${folders.join(
+          "."
+        )}`
+      );
+      return;
+    }
+
     if (_.get(transMap, folders.join(".")) !== undefined) {
       return;
     }
