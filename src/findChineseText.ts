@@ -46,7 +46,8 @@ function findTextInTs(code: string, fileName: string) {
         }
         break;
       }
-      case ts.SyntaxKind.JsxElement: {
+      case ts.SyntaxKind.JsxElement:
+      case ts.SyntaxKind.JsxFragment: {
         const { children } = node as ts.JsxElement;
 
         children.forEach((child) => {
@@ -117,6 +118,10 @@ function findTextInTs(code: string, fileName: string) {
             isString: true,
           });
         }
+      case ts.SyntaxKind.JsxFragment: {
+      }
+      case ts.SyntaxKind.JsxText: {
+      }
     }
 
     ts.forEachChild(node, visit);
