@@ -299,3 +299,6 @@ function sortTranslateList(r1: vscode.Range, r2: vscode.Range) {
     return r2.start.line - r1.start.line;
   }
 }
+
+// TODO: 一键翻译全部文件
+// TODO: 支持一个翻译软件， 生成有意义的key
