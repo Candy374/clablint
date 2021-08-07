@@ -2,7 +2,7 @@
   "name": "clab-lint",
   "displayName": "Convertlab I18n tool",
   "description": "a I18n tool for convertlab",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "publisher": "CovertLab",
   "engines": {
     "vscode": "^1.58.0"
@@ -60,12 +60,15 @@
     }
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
+    "pretest": "npm run test-compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "vscode:prepublish": "npm run -S esbuild-base -- --minify",
+    "esbuild-base": "rm -rf out && esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node",
+    "esbuild": "npm run -S esbuild-base -- --sourcemap",
+    "esbuild-watch": "npm run -S esbuild-base -- --sourcemap --watch",
+    "test-compile": "tsc -p ./"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.12",
@@ -78,6 +81,7 @@
     "@types/vscode": "^1.57.0",
     "@typescript-eslint/eslint-plugin": "^4.26.0",
     "@typescript-eslint/parser": "^4.26.0",
+    "esbuild": "^0.12.18",
     "eslint": "^7.27.0",
     "glob": "^7.1.7",
     "mocha": "^8.4.0",
