@@ -6,13 +6,19 @@ import * as ts from "typescript";
 import * as vscode from "vscode";
 import * as _ from "lodash";
 import { getFolderArr, getI18N } from "./getLangData";
+import { getCommonTranslateFile } from "./file";
 
 class Cache {
-  memories = [] as Array<{ code: string; positions: Position[] }>;
-  addCache(code: string, positions: Position[]) {
+  memories = [] as Array<{
+    code: string;
+    positions: Position[];
+    i18nFileName: string;
+  }>;
+  addCache(code: string, i18nFileName: string, positions: Position[]) {
     this.memories.push({
       code,
       positions,
+      i18nFileName,
     });
 
     if (this.memories.length > 8) {
@@ -26,6 +32,11 @@ class Cache {
     }
 
     return false;
+  }
+  clearCacheByFilename(filename: string) {
+    this.memories = this.memories.filter(
+      (memory) => memory.i18nFileName !== filename
+    );
   }
 }
 
@@ -83,10 +94,10 @@ export function findI18NPositions(code: string) {
     return cachedPoses;
   }
 
-  const I18N = getI18N();
+  const { i18n, fileName } = getI18N();
   const positions = [] as Position[];
 
-  const regexMatches = getRegexMatches(I18N, code);
+  const regexMatches = getRegexMatches(i18n, code);
   let matchPositions = positions.concat(regexMatches) as any;
   matchPositions = _.uniqBy(
     matchPositions,
@@ -95,6 +106,14 @@ export function findI18NPositions(code: string) {
     }
   );
 
-  cache.addCache(code, matchPositions);
+  cache.addCache(code, fileName, matchPositions);
   return matchPositions;
+}
+
+export function clearCacheByFilename(filename: string) {
+  if (filename === getCommonTranslateFile()) {
+    cache.memories = [];
+    return;
+  }
+  cache.clearCacheByFilename(filename);
 }

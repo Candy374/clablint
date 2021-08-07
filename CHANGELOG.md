@@ -8,3 +8,4 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - 增加对 JsxFragment 对支持
 - i18n 文件使用命名变量
+- 如果 i18n 文件更新, 清除 cache

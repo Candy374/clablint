@@ -4,6 +4,7 @@
  */
 import * as fs from "fs";
 import * as vscode from "vscode";
+import { getCommonTranslateFile, getCurrentTranslateFile } from "./file";
 import { getLangJson } from "./utils";
 
 /**
@@ -30,17 +31,19 @@ export function getI18N() {
   const [filePrefix, filePath] = currentFilename.split("/src/");
 
   const filePathPrefix = getFolderArr(filePath).join("/");
-  const fileName = `${filePrefix}/src/${filePathPrefix}/i18n/index.ts`;
+  const fileName = getCurrentTranslateFile(filePathPrefix);
   const prefixList = getFolderArr(filePath);
   const currentFileMap = getFlattenMap(getLangData(fileName), prefixList);
-  const commonFileMap = getFlattenMap(
-    getLangData(`${filePrefix}/src/i18n/common.ts`),
-    ["common"]
-  );
+  const commonFileMap = getFlattenMap(getLangData(getCommonTranslateFile()), [
+    "common",
+  ]);
 
   return {
-    ...currentFileMap,
-    ...commonFileMap,
+    i18n: {
+      ...currentFileMap,
+      ...commonFileMap,
+    },
+    fileName,
   };
 }
 /**
@@ -48,34 +51,6 @@ export function getI18N() {
  */
 
 type TranslateMap = { [key: string]: TranslateMap | string };
-// export function getKeyByValueMap(meta: TranslateMap, value: string): string[] {
-//   const keys: string[] = [];
-//   const currentFilename = vscode.window.activeTextEditor!.document.uri.path;
-//   const [filePrefix, filePath] = currentFilename.split("/src/");
-
-//   const prefix = getFolderArr(filePath);
-//   function dfs(
-//     meta: TranslateMap | string,
-//     parentIds: string[]
-//   ): string | undefined {
-//     if (typeof meta === "string") {
-//       const flattenKey = parentIds.join(".");
-//       if (meta === value) {
-//         keys.push([prefix, flattenKey].join("."));
-//       }
-
-//       return;
-//     }
-
-//     for (const [key, child] of Object.entries(meta)) {
-//       dfs(child, parentIds.concat(key));
-//     }
-//   }
-
-//   dfs(meta, []);
-
-//   return keys;
-// }
 
 function getFlattenMap(meta: TranslateMap, prefixList: string[]) {
   const flattenMap: { [key: string]: string } = {};

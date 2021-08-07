@@ -22,6 +22,14 @@ export function getMainTranslateFile() {
   return `${getWorkspacePath()}/src/i18n/translationMeta.ts`;
 }
 
+export function getCommonTranslateFile() {
+  return `${getWorkspacePath()}/src/i18n/common.ts`;
+}
+
+export function getCurrentTranslateFile(folderPath: string) {
+  return `${getWorkspacePath()}/src/${folderPath}/i18n/index.ts`;
+}
+
 export function updateLangFiles(
   keyValue: string,
   text: string,
@@ -39,11 +47,11 @@ export function updateLangFiles(
     folderPath = `${folder}/${entity}`;
   }
   const fullKey = restPath.join(".");
-  const prefixPath = getWorkspacePath();
+
   const targetFilename =
     folderPath === "common"
-      ? `${prefixPath}/src/i18n/common.ts`
-      : `${prefixPath}/src/${folderPath}/i18n/index.ts`;
+      ? getCommonTranslateFile()
+      : getCurrentTranslateFile(folderPath);
   const filename = restPath[restPath.length - 1];
 
   if (!fs.existsSync(targetFilename)) {

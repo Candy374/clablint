@@ -62,7 +62,6 @@ export function triggerUpdateDecorations(
 export function updateDecorations() {
   const activeEditor = vscode.window.activeTextEditor!;
   const currentFilename = activeEditor.document.fileName;
-  const chineseCharDecoration = getChineseCharDecoration();
   if (
     !activeEditor ||
     currentFilename.includes("/i18n/") ||
@@ -90,6 +89,7 @@ export function updateDecorations() {
     return;
   }
 
+  const chineseCharDecoration = getChineseCharDecoration();
   /** 设置 I18N 的提示 */
   setLineDecorations(activeEditor);
   /** 设置中文的提示 */

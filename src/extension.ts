@@ -9,6 +9,7 @@ import { addImportString, replaceAndUpdate } from "./replaceAndUpdate";
 import { findMatchKey, getConfiguration } from "./utils";
 import * as randomstring from "randomstring";
 import _ = require("lodash");
+import { clearCacheByFilename } from "./findI18NPositions";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -58,8 +59,8 @@ export function activate(context: vscode.ExtensionContext) {
                 command: string;
                 arguments: any[];
               }[] = [];
-              finalLangObj = getI18N();
-
+              const { i18n } = getI18N();
+              finalLangObj = i18n;
               for (const key of Object.keys(finalLangObj)) {
                 if (finalLangObj[key] === text) {
                   actions.push({
@@ -173,6 +174,13 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((event) => {
       if (activeEditor && event.document === activeEditor.document) {
+        const currentFilename = activeEditor.document.fileName;
+        // 如果当前文件是翻译文件， 清除缓存
+        if (currentFilename.includes("/i18n/")) {
+          clearCacheByFilename(currentFilename);
+          return;
+        }
+
         triggerUpdateDecorations((newTargetStringList) => {
           targetStringList = newTargetStringList;
         });
