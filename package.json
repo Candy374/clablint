@@ -21,8 +21,7 @@
     "onLanguage:typescriptreact",
     "onLanguage:javascriptreact",
     "onLanguage:javascript",
-    "onCommand:clab-lint.start",
-    "onCommand:clab-lint.helloWorld"
+    "onCommand:clab-lint.start"
   ],
   "main": "./out/extension.js",
   "icon": "favicon.png",
@@ -31,10 +30,6 @@
       {
         "command": "clab-lint.start",
         "title": "clab-lint translate current file"
-      },
-      {
-        "command": "clab-lint.helloWorld",
-        "title": "Hello"
       }
     ],
     "configuration": {

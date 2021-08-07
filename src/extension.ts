@@ -18,8 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
   //   vscode.commands.registerCommand("clab-lint.findAllI18N", findAllI18N)
   // );
 
-  // vscode.window.showInformationMessage("Hello World from clab-lint!");
-
   let targetStringList: TargetStr[] = [];
   let finalLangObj: { [key: string]: any } = {};
 
@@ -137,10 +135,13 @@ export function activate(context: vscode.ExtensionContext) {
 
         try {
           const finalArgs = Array.isArray(targets) ? targets : [targets];
+          finalArgs.sort((t1: TargetStr, t2: TargetStr) => {
+            return sortTranslateList(t1.range, t2.range);
+          });
 
           let needCheckDup = !varName;
           let checked = false;
-          for (const curr of finalArgs.reverse()) {
+          for (const curr of finalArgs) {
             await replaceAndUpdate(curr, val, needCheckDup && !checked);
             if (needCheckDup) {
               checked = true;
@@ -264,7 +265,16 @@ export function activate(context: vscode.ExtensionContext) {
       }, [] as { key: string; target: TargetStr }[]);
 
       try {
-        for (const { key, target } of replaceableList.reverse()) {
+        replaceableList.sort(
+          (
+            { target: t1 }: { target: TargetStr },
+            { target: t2 }: { target: TargetStr }
+          ) => {
+            return sortTranslateList(t1.range, t2.range);
+          }
+        );
+
+        for (const { key, target } of replaceableList) {
           await replaceAndUpdate(target, `I18n.${key}`, false);
         }
 
@@ -281,3 +291,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
+
+function sortTranslateList(r1: vscode.Range, r2: vscode.Range) {
+  if (r1.start.line === r2.start.line) {
+    return r2.start.character - r1.start.character;
+  } else {
+    return r2.start.line - r1.start.line;
+  }
+}

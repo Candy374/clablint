@@ -8,4 +8,5 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 - 增加对 JsxFragment 对支持
 - i18n 文件使用命名变量
-- 如果 i18n 文件更新, 清除 cache
+- 修复 i18n 文件更新, 被翻译文件中文提示不会立刻更新
+- 修复 批量翻译时，同一行有 2 个翻译会导致错乱
