@@ -8,7 +8,6 @@ import * as _ from "lodash";
 import * as prettier from "prettier";
 import { getLangData } from "./getLangData";
 import { getLangJsonFromContent, getLangPrefix } from "./utils";
-import { LANG_PREFIX } from "./const";
 
 function getWorkspacePath() {
   const path = vscode.window.activeTextEditor!.document.uri.path;
@@ -78,7 +77,7 @@ export function updateLangFiles(
     _.set(obj, fullKey, text);
     fs.writeFileSync(
       targetFilename,
-      prettierFile(`export default ${JSON.stringify(obj)};`)
+      prettierFile(`const i18n = ${JSON.stringify(obj)}; export default i18n;`)
     );
   }
 }
@@ -102,7 +101,9 @@ export function prettierFile(fileContent: string) {
 export function generateNewLangFile(key: string, value: string) {
   const obj = _.set({}, key, value);
 
-  return prettierFile(`export default ${JSON.stringify(obj, null, 2)}`);
+  return prettierFile(
+    `const i18n = ${JSON.stringify(obj)}; export default i18n;`
+  );
 }
 
 function addImportToMetaFile(relativeFilename: string, folders: string[]) {

@@ -7,3 +7,4 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 ## [0.1.3]
 
 - 增加对 JsxFragment 对支持
+- i18n 文件使用命名变量
