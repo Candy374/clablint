@@ -4,7 +4,7 @@ All notable changes to the "clab-lint" extension will be documented in this file
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
-## [0.0.4]
+## [0.0.5]
 
 - 使用 esbuild 打包来减少体积
 
