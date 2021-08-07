@@ -302,3 +302,5 @@ function sortTranslateList(r1: vscode.Range, r2: vscode.Range) {
 
 // TODO: 一键翻译全部文件
 // TODO: 支持一个翻译软件， 生成有意义的key
+// TODO: 在代码中增加eslint， 限制提交文件中的中文
+// TODO: 增加  ignore 标志 允许忽略翻译
