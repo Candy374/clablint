@@ -123,6 +123,12 @@ export function activate(context: vscode.ExtensionContext) {
             validateInput(input) {
               if (!input.match(/^I18n\.\w+(\.\w+)+$/)) {
                 return "变量名格式 `I18n.[folder].[entity]`，如 `I18n.domains.trait_manage`，[key] 中可包含更多 `.`";
+              } else {
+                for (const part of input.split(".")) {
+                  if (/^\d.*/.test(part)) {
+                    return "[folder]、[entity]或者key 不能以数字开头";
+                  }
+                }
               }
             },
           });
