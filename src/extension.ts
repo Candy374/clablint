@@ -3,13 +3,18 @@
 import * as vscode from "vscode";
 import { triggerUpdateDecorations } from "./chineseCharDecorations";
 import { TargetStr } from "./define";
-
+import { clearCacheByFilename } from "./findI18NPositions";
 import { getI18N } from "./getLangData";
 import { addImportString, replaceAndUpdate } from "./replaceAndUpdate";
-import { findMatchKey, getConfiguration } from "./utils";
-import * as randomstring from "randomstring";
+import { translateCurrent } from "./translateCurrent";
+import {
+  getConfiguration,
+  getSuggestionPath,
+  sortTranslateList,
+  translateAll,
+} from "./utils";
+
 import _ = require("lodash");
-import { clearCacheByFilename } from "./findI18NPositions";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -90,28 +95,14 @@ export function activate(context: vscode.ExtensionContext) {
     );
   }
 
-  let suggestionPath = "";
-  function setSuggestionPath() {
-    const currentFilename = activeEditor!.document.fileName;
-
-    if (currentFilename.includes("/src/")) {
-      suggestionPath = currentFilename
-        .split("/src/")
-        .pop()!
-        .replace(/\//g, ".")
-        .replace(/\.[^.]+$/, ".");
-    } else {
-      suggestionPath = "";
-    }
-  }
-
-  setSuggestionPath();
-
   // 点击小灯泡后进行替换操作
   context.subscriptions.push(
     vscode.commands.registerCommand(
       "clab-lint.extractI18N",
       async ({ varName, targets }) => {
+        const suggestionPath = getSuggestionPath(
+          vscode.window.activeTextEditor?.document.fileName
+        );
         let val;
         if (varName) {
           val = varName;
@@ -172,7 +163,6 @@ export function activate(context: vscode.ExtensionContext) {
         triggerUpdateDecorations((newTargetStringList) => {
           targetStringList = newTargetStringList;
         });
-        setSuggestionPath();
       }
     }, null)
   );
@@ -195,7 +185,6 @@ export function activate(context: vscode.ExtensionContext) {
     }, null)
   );
 
-  const virtualMemory: { [key: string]: any } = {};
   // 一键替换所有中文
   context.subscriptions.push(
     vscode.commands.registerCommand("clab-lint.start", async () => {
@@ -222,89 +211,19 @@ export function activate(context: vscode.ExtensionContext) {
       //   const transText = findText?.join("").slice(0, 4);
       //   return prev.concat(translateText(transText));
       // }, [] as any[]);
+      translateCurrent(targetStringList);
+    })
+  );
 
-      const translateTexts: string[] = [];
-      // Promise.all(translatePromises).then(([...translateTexts]) => {
-      const replaceableList = targetStringList.reduce((prev, curr, i) => {
-        const key = findMatchKey(finalLangObj, curr.text);
-        if (!virtualMemory[curr.text]) {
-          if (key) {
-            virtualMemory[curr.text] = key;
-            return prev.concat({
-              target: curr,
-              key,
-            });
-          }
-          const uuidKey = `${randomstring.generate({
-            length: 8,
-            charset: "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM",
-          })}`;
-          const transText = translateTexts[i]
-            ? _.camelCase(translateTexts[i])
-            : uuidKey;
-          let transKey = `${suggestionPath}${transText}`;
-          let occurTime = 1;
-          // 防止出现前四位相同但是整体文案不同的情况
-          while (
-            finalLangObj[transKey] !== curr.text &&
-            _.keys(finalLangObj).includes(
-              `${transKey}${occurTime >= 2 ? occurTime : ""}`
-            )
-          ) {
-            occurTime++;
-          }
-          if (occurTime >= 2) {
-            transKey = `${transKey}${occurTime}`;
-          }
-          virtualMemory[curr.text] = transKey;
-          finalLangObj[transKey] = curr.text;
-          return prev.concat({
-            target: curr,
-            key: transKey,
-          });
-        } else {
-          return prev.concat({
-            target: curr,
-            key: virtualMemory[curr.text],
-          });
-        }
-      }, [] as { key: string; target: TargetStr }[]);
-
-      try {
-        replaceableList.sort(
-          (
-            { target: t1 }: { target: TargetStr },
-            { target: t2 }: { target: TargetStr }
-          ) => {
-            return sortTranslateList(t1.range, t2.range);
-          }
-        );
-
-        for (const { key, target } of replaceableList) {
-          await replaceAndUpdate(target, `I18n.${key}`, false);
-        }
-
-        addImportString();
-        vscode.window.showInformationMessage(
-          "替换完成, 修改了${replaceableList.length}个字符串"
-        );
-      } catch (e) {
-        vscode.window.showErrorMessage(e.message);
-      }
+  context.subscriptions.push(
+    vscode.commands.registerCommand("clab-lint.translate_all", () => {
+      translateAll();
     })
   );
 }
 
 // this method is called when your extension is deactivated
 export function deactivate() {}
-
-function sortTranslateList(r1: vscode.Range, r2: vscode.Range) {
-  if (r1.start.line === r2.start.line) {
-    return r2.start.character - r1.start.character;
-  } else {
-    return r2.start.line - r1.start.line;
-  }
-}
 
 // TODO: 一键翻译全部文件
 // TODO: 支持一个翻译软件， 生成有意义的key

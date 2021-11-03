@@ -1,7 +1,3 @@
-/**
- * @author linhuiw
- * @desc 工具方法
- */
 import * as _ from "lodash";
 import * as vscode from "vscode";
 import * as fs from "fs-extra";
@@ -60,24 +56,31 @@ export function findMatchKey(langObj: { [x: string]: any }, text: any) {
   return null;
 }
 
-/**
- * 获取文件夹下所有文件
- * @function getAllFiles
- * @param  {string} dir Dir path string.
- * @return {string[]} Array with all file names that are inside the directory.
- */
 export function getAllFiles(dir: string): any {
-  fs.readdirSync(dir).reduce((files: any, file: string) => {
-    // 避免读取node_modules造成性能问题
-    if (file === "node_modules") {
+  const files = fs.readdirSync(dir).reduce((files: any, file: string) => {
+    if (file === "node_modules" || file === "i18n") {
       return [...files];
     }
     const name = path.join(dir, file);
     const isDirectory = fs.statSync(name).isDirectory();
     return isDirectory ? [...files, ...getAllFiles(name)] : [...files, name];
   }, []);
+  return files;
 }
 
+export function translateAll() {}
+
+export function getSuggestionPath(currentFilename?: string) {
+  if (currentFilename?.includes("/src/")) {
+    return currentFilename
+      .split("/src/")
+      .pop()!
+      .replace(/\//g, ".")
+      .replace(/\.[^.]+$/, ".");
+  } else {
+    return "";
+  }
+}
 /**
  * 获取文件 Json
  */
@@ -119,34 +122,6 @@ export function getConfiguration(text: string): any {
   const value = configs.get(text);
   return value;
 }
-
-/**
- * 查找kiwi-cli配置文件
- */
-// export const getConfigFile = () => {
-//   let kiwiConfigJson = `${vscode.workspace.workspaceFolders?.[0].uri.fsPath}/.kiwirc.js`;
-//   // 先找js
-//   if (!fs.existsSync(kiwiConfigJson)) {
-//     kiwiConfigJson = `${vscode.workspace.workspaceFolders?.[0].uri.fsPath}/.kiwirc.ts`;
-//     //再找ts
-//     if (!fs.existsSync(kiwiConfigJson)) {
-//       return null;
-//     }
-//   }
-//   return kiwiConfigJson;
-// };
-
-/**
- * 查找convertlab-linter配置文件
- */
-export const getKiwiLinterConfigFile = () => {
-  let kiwiConfigJson = `${vscode.workspace.workspaceFolders?.[0].uri.fsPath}/.kiwi`;
-  // 先找js
-  if (!fs.existsSync(kiwiConfigJson)) {
-    return null;
-  }
-  return kiwiConfigJson;
-};
 
 /**
  * 重试方法
@@ -248,4 +223,12 @@ export function getLangPrefix() {
     vscode.window.activeTextEditor!.document.uri.path
   );
   return langPrefix;
+}
+
+export function sortTranslateList(r1: vscode.Range, r2: vscode.Range) {
+  if (r1.start.line === r2.start.line) {
+    return r2.start.character - r1.start.character;
+  } else {
+    return r2.start.line - r1.start.line;
+  }
 }

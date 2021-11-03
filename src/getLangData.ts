@@ -6,7 +6,7 @@ import * as fs from "fs";
 import * as vscode from "vscode";
 import { getCommonTranslateFile, getCurrentTranslateFile } from "./file";
 import { getLangJson } from "./utils";
-
+import * as ts from "typescript";
 /**
  * 获取对应文件的语言
  */
@@ -33,6 +33,7 @@ export function getI18N() {
   const filePathPrefix = getFolderArr(filePath).join("/");
   const fileName = getCurrentTranslateFile(filePathPrefix);
   const prefixList = getFolderArr(filePath);
+
   const currentFileMap = getFlattenMap(getLangData(fileName), prefixList);
   const commonFileMap = getFlattenMap(getLangData(getCommonTranslateFile()), [
     "common",

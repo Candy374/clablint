@@ -100,7 +100,7 @@ export function prettierFile(fileContent: string) {
       trailingComma: "all",
       singleQuote: true,
     });
-  } catch (e) {
+  } catch (e: any) {
     console.error(`代码格式化报错！${e.toString()}\n代码为：${fileContent}`);
     return fileContent;
   }
