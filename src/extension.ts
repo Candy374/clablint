@@ -6,12 +6,11 @@ import { TargetStr } from "./define";
 import { clearCacheByFilename } from "./findI18NPositions";
 import { getI18N } from "./getLangData";
 import { addImportString, replaceAndUpdate } from "./replaceAndUpdate";
-import { translateCurrent } from "./translateCurrent";
+import { translateCurrent, translateAll } from "./translateCurrent";
 import {
   getConfiguration,
   getSuggestionPath,
   sortTranslateList,
-  translateAll,
 } from "./utils";
 
 import _ = require("lodash");

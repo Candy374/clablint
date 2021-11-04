@@ -56,20 +56,6 @@ export function findMatchKey(langObj: { [x: string]: any }, text: any) {
   return null;
 }
 
-export function getAllFiles(dir: string): any {
-  const files = fs.readdirSync(dir).reduce((files: any, file: string) => {
-    if (file === "node_modules" || file === "i18n") {
-      return [...files];
-    }
-    const name = path.join(dir, file);
-    const isDirectory = fs.statSync(name).isDirectory();
-    return isDirectory ? [...files, ...getAllFiles(name)] : [...files, name];
-  }, []);
-  return files;
-}
-
-export function translateAll() {}
-
 export function getSuggestionPath(currentFilename?: string) {
   if (currentFilename?.includes("/src/")) {
     return currentFilename
@@ -121,40 +107,6 @@ export function getConfiguration(text: string): any {
 
   const value = configs.get(text);
   return value;
-}
-
-/**
- * 重试方法
- * @param asyncOperation
- * @param times
- */
-function retry(
-  asyncOperation: { (): Promise<any>; (): Promise<any> },
-  times = 1
-) {
-  let runTimes = 1;
-  function handleReject(e: any): any {
-    if (runTimes++ < times) {
-      return asyncOperation().catch(handleReject);
-    } else {
-      throw e;
-    }
-  }
-  return asyncOperation().catch(handleReject);
-}
-
-/**
- * 设置超时
- * @param promise
- * @param ms
- */
-function withTimeout(promise: Promise<unknown>, ms: number | undefined) {
-  const timeoutPromise = new Promise((resolve, reject) => {
-    setTimeout(() => {
-      reject(`Promise timed out after ${ms} ms.`);
-    }, ms);
-  });
-  return Promise.race([promise, timeoutPromise]);
 }
 
 /**

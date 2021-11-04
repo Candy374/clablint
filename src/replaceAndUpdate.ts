@@ -3,43 +3,43 @@
  * @desc 更新文件
  */
 
-import { TargetStr } from "./define";
 import * as vscode from "vscode";
-import * as fs from "fs-extra";
-import { prettierFile, updateLangFiles } from "./file";
+import { TargetStr } from "./define";
+import { updateLangFiles } from "./file";
 /**
  * 更新文件
- * @param arg  目标字符串对象
+ * @param target  目标字符串对象
  * @param val  目标 key
  * @param validateDuplicate 是否校验文件中已经存在要写入的 key
  */
 export function replaceAndUpdate(
-  arg: TargetStr,
+  target: TargetStr,
   val: string,
   validateDuplicate: boolean
 ): Thenable<any> {
-  let activeEditor = vscode.window.activeTextEditor!;
-  const currentFilename = activeEditor.document.fileName;
   const edit = new vscode.WorkspaceEdit();
   const { document } = vscode.window.activeTextEditor!;
-  let finalReplaceText = arg.text;
+  let finalReplaceText = target.text;
   // 若是字符串，删掉两侧的引号
-  if (arg.isString) {
+  if (target.isString) {
     // 如果引号左侧是 等号，则可能是 jsx 的 props，此时要替换成 {
     let startColPosition;
     try {
-      startColPosition = arg.range.start.translate(0, -2);
+      startColPosition = target.range.start.translate(0, -2);
     } catch (e) {
-      startColPosition = arg.range.start.translate(0, 0);
+      startColPosition = target.range.start.translate(0, 0);
     }
-    const prevTextRange = new vscode.Range(startColPosition, arg.range.start);
+    const prevTextRange = new vscode.Range(
+      startColPosition,
+      target.range.start
+    );
     const [last2Char, last1Char] = document.getText(prevTextRange).split("");
     let finalReplaceVal = `translate(${val})`;
     if (last2Char === "=") {
       finalReplaceVal = `{${finalReplaceVal}}`;
     } else if (last1Char === "`") {
       // 若是模板字符串，看看其中是否包含变量
-      const varInStr = arg.text.match(/(\$\{[^\}]+?\})/g);
+      const varInStr = target.text.match(/(\$\{[^\}]+?\})/g);
       if (varInStr) {
         const kvPair = varInStr.map((str, index) => {
           return `val${index + 1}: ${str.replace(/^\${([^\}]+)\}$/, "$1")}`;
@@ -54,14 +54,14 @@ export function replaceAndUpdate(
 
     edit.replace(
       document.uri,
-      arg.range.with({
-        start: arg.range.start.translate(0, -1),
-        end: arg.range.end.translate(0, 1),
+      target.range.with({
+        start: target.range.start.translate(0, -1),
+        end: target.range.end.translate(0, 1),
       }),
       finalReplaceVal
     );
   } else {
-    edit.replace(document.uri, arg.range, `{translate(${val})}`);
+    edit.replace(document.uri, target.range, `{translate(${val})}`);
     // edit.replace(document.uri, arg.range, "{" + val + "}");
   }
 
